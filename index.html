@@ -506,7 +506,7 @@ sun.castShadow = true;
 sun.shadow.mapSize.setScalar(hiQ ? 2048 : 1024);
 Object.assign(sun.shadow.camera, { left: -3.6, right: 3.6, top: 3.2, bottom: -1.6, near: 2, far: 14 });
 sun.shadow.bias = -0.0002;
-sun.shadow.normalBias = 0.012;
+sun.shadow.normalBias = 0.004;
 sun.shadow.radius = 3;
 world.add(sun);
 // Cool fill from the right lifts the shadow side; a low rim separates the roof from the background
@@ -620,17 +620,24 @@ const paint = (roughness) => {
 };
 // Light falls off with depth inside the busbar chamber: the rear phases and back wall sit in the alley's
 // own shadow. Fakes the occlusion a path tracer would give, darkening surfaces toward the back wall.
-// `near` and `far` are the world depths where the falloff starts and bottoms out.
-function chamberShade(m, near = 0.42, far = -0.3) {
-  const ramp = `smoothstep(${near.toFixed(3)}, ${far.toFixed(3)}, vChamberZ)`;
+// `near` and `far` are the world depths where the falloff starts and bottoms out. Given `floorY`, surfaces
+// also darken over the last few centimetres down to that world height: the light a floor's corners and
+// the feet of parts standing on it lose. `ibl` scales the environment light, for surfaces the room can
+// barely see (three.js ignores a material's envMapIntensity when lighting comes from scene.environment).
+function chamberShade(m, near = 0.42, far = -0.3, floorY = null, ibl = 1) {
+  const ramp = `smoothstep(${near.toFixed(3)}, ${far.toFixed(3)}, vChamberP.z)`;
+  const ao = floorY === null ? "" :
+    `\ngl_FragColor.rgb *= mix(0.5, 1.0, pow(smoothstep(${floorY.toFixed(4)}, ${(floorY + 0.07).toFixed(4)}, vChamberP.y), 0.6));`;
   m.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vChamberZ;")
-      .replace("#include <project_vertex>", "#include <project_vertex>\nvChamberZ = (modelMatrix * vec4(transformed, 1.0)).z;");
-    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying float vChamberZ;")
-      .replace("#include <opaque_fragment>", `#include <opaque_fragment>\ngl_FragColor.rgb *= mix(1.0, 0.1, pow(${ramp}, 0.7));`);
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vChamberP;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvChamberP = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vChamberP;")
+      .replace("#include <opaque_fragment>", `#include <opaque_fragment>\ngl_FragColor.rgb *= mix(1.0, 0.1, pow(${ramp}, 0.7));${ao}`);
+    if (ibl !== 1) sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_maps>",
+      `#include <lights_fragment_maps>\n#ifdef USE_ENVMAP\niblIrradiance *= ${ibl.toFixed(3)}; radiance *= ${ibl.toFixed(3)};\n#endif`);
   };
   // Every closure has the same source, so three.js would otherwise share one program across ramps
-  m.customProgramCacheKey = () => `chamber:${ramp}`;
+  m.customProgramCacheKey = () => `chamber:${ramp}${ao}:${ibl}`;
   return m;
 }
 // The ACB cradle is a closed steel pocket lit only through the gap round the breaker: anything behind
@@ -1817,8 +1824,12 @@ function eStop(p, x, y) {
 // breaker, the contactor and the current sensor; control gear sits on a DIN rail on the right, wired
 // through slotted trunking. Door space: origin at the door's bottom-left corner, inside face at z = 0.
 const DRAWER_TRAVEL = 0.26, TRAY_D = 0.49, TRAY_Y = 0.0135; // TRAY_Y: top of the tray floor
-// The tray darkens as it runs back into the carcass mouth
-const trayShade = (m) => chamberShade(m, 0.52, 0.2);
+const POCKET_D = 0.53, MCC_N = 7, MCC_OPEN = 3; // compartment depth; MCC module count; which module slides out
+const TRAY_FLOOR = PL + 0.25 + MCC_OPEN * (BH - CH - 0.25) / MCC_N + G + TRAY_Y; // world height of the tray floor
+// The tray darkens as it runs back into the carcass mouth, and toward its floor. Its walls and parts
+// hide most of the room from each other, so the even environment fill is cut back and the key light's
+// shadows carry the shape.
+const trayShade = (m, ao = true) => chamberShade(m, 0.52, 0.2, ao ? TRAY_FLOOR : null, 0.4);
 const moulded = (color, roughness = .55) =>
   trayShade(new THREE.MeshPhysicalMaterial({ color, roughness, clearcoat: .15, clearcoatRoughness: .5 }));
 const printed = (w, h, draw) => trayShade(std(0xffffff, .6, 0, { map: canvasTex(w, h, draw), ...DECAL }));
@@ -1829,6 +1840,7 @@ const ductTex = canvasTex(64, 64, (g, s) => {
 ductTex.wrapS = THREE.RepeatWrapping;
 const TRAY = {
   zinc: trayShade(std(0xA3A8AC, .48, .75)),
+  floor: trayShade(std(0xA3A8AC, .48, .75), false),
   side: trayShade(paint(.46)),
   rail: trayShade(std(0xC4C7CA, .3, .9)),
   shaft: trayShade(std(0xB5B9BD, .32, .9)),
@@ -1931,7 +1943,7 @@ function duct(p, along, len, x, z) {
 function starterTray(p, dw, dh) {
   const cx = dw / 2, zc = -0.008 - TRAY_D / 2, inner = dw - 0.03;
   // Tray: floor, low folded side walls, a rear bulkhead, telescopic rails outside each wall
-  box(p, inner, 0.003, TRAY_D, TRAY.zinc, cx, TRAY_Y - 0.0015, zc);
+  box(p, inner, 0.003, TRAY_D, TRAY.floor, cx, TRAY_Y - 0.0015, zc);
   for (const s of [-1, 1]) {
     const x = cx + s * (inner / 2 - 0.0015);
     box(p, 0.003, 0.06, TRAY_D, TRAY.side, x, TRAY_Y + 0.03, zc, 0.001);
@@ -2070,15 +2082,45 @@ function starterTray(p, dw, dh) {
   // Transformer secondary back to the terminal strip's front row
   [0, 1].forEach((k) => wire(p, TRAY.ctlGrey, 0.0013, [[xx + 0.007 + k * 0.014, xt + 0.009, xz - 0.022], [xx + 0.007 + k * 0.014, xt + 0.02, xz - 0.04],
     [tx0 + (8 + k) * tw + tw / 2, tt + 0.016, bzc + 0.04], [tx0 + (8 + k) * tw + tw / 2, tt, bzc + 0.017]]));
+
+  // Soft contact shadows baked onto the floor: along the walls and under everything standing on it,
+  // as [x, z, width, depth, strength, height] in door space. Taller parts shade a wider ring of floor.
+  const back = -0.008 - TRAY_D, left = cx - inner / 2;
+  trayShadow(p, cx, zc, inner, [
+    [left, zc, 0.01, TRAY_D, .8, 0.06], [dw - 0.015, zc, 0.01, TRAY_D, .8, 0.06],
+    [cx, -0.004, inner, 0.01, .8, 0.19], [cx, back, inner, 0.01, .8, 0.17],
+    [hx, mz - 0.035, 0.08, 0.07, .9, 0.15], [0.14, kz, 0.18, 0.035, .4, 0.01], [hx, kz, 0.045, 0.09, .85, 0.09],
+    [hx, sz, 0.074, 0.04, .8, 0.036], [hx, bz, 0.12, 0.04, .9, 0.09],
+    [dx, -0.195, 0.026, 0.36, .8, 0.05], [(bx0 + bx1) / 2, backZ, bx1 - bx0, 0.026, .8, 0.05],
+    [(0.272 + dw - 0.02) / 2, bzc, dw - 0.292, 0.035, .4, 0.01], [bx, bzc, 0.045, 0.09, .85, 0.07],
+    [0.355, bzc, 0.037, 0.085, .85, 0.08], [tx0 + 6 * tw + 0.003, bzc, 12 * tw + 0.006, 0.05, .85, 0.05],
+    [xx, xz, 0.09, 0.06, .9, 0.065],
+  ]);
+}
+function trayShadow(p, cx, zc, w, rects) {
+  const K = 768, W = Math.round(w * K), H = Math.round(TRAY_D * K);
+  const x0 = cx - w / 2, z0 = zc - TRAY_D / 2; // canvas top edge is the back of the tray
+  const tex = canvasTex(W, H, (g) => {
+    // As for the lineup's footprint: each rect is drawn off-canvas and only its blurred shadow lands
+    g.shadowOffsetX = W;
+    for (const [x, z, rw, rd, a, h] of rects) {
+      g.shadowBlur = (0.006 + h * 0.3) * K;
+      g.shadowColor = `rgba(0,0,0,${a})`;
+      g.fillRect((x - rw / 2 - x0) * K - W, (z - rd / 2 - z0) * K, rw * K, rd * K);
+    }
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, TRAY_D),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, ...DECAL }));
+  m.rotation.x = -Math.PI / 2; m.position.set(cx, TRAY_Y + 0.0002, zc);
+  p.add(m);
 }
 
 // The compartment the tray runs in, behind the module's door: a pocket through the carcass lined with
 // galvanised partitions, the fixed half of each slide rail on the side walls, and at the back the
 // moulded barrier to the vertical busbars, its stab shutters dropped shut now the tray is withdrawn
 // and the control plug socket on the right. x0, y are the module's bottom-left corner in section space.
-const POCKET_D = 0.53, MCC_N = 7, MCC_OPEN = 3; // pocket depth; module count; which module slides out
 const POCKET = {
-  lining: chamberShade(std(0x9A9FA3, .55, .6)),
+  lining: chamberShade(std(0x9A9FA3, .55, .6), 0.42, -0.3, null, 0.35),
   rail: chamberShade(std(0xB9BDC1, .35, .9)),
   barrier: chamberShade(std(0x3B3E41, .7, 0)),
   shutter: chamberShade(std(0x6A6F74, .55, 0)),
