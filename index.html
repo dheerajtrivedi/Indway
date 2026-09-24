@@ -3,8 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Indway — LT Panel Manufacturer</title>
+<title>Indway - LT Panel Manufacturer in Delhi NCR</title>
 <meta name="description" content="Indway designs and builds LT panels: PCC, MCC, APFC, distribution boards, AMF panels and feeder pillars, wired and tested before dispatch.">
+<link rel="canonical" href="https://dheerajtrivedi.github.io/Indway/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Indway">
+<meta property="og:title" content="Indway - LT Panel Manufacturer in Delhi NCR">
+<meta property="og:description" content="Indway designs and builds LT panels: PCC, MCC, APFC, distribution boards, AMF panels and feeder pillars, wired and tested before dispatch.">
+<meta property="og:url" content="https://dheerajtrivedi.github.io/Indway/">
+<meta property="og:image" content="https://dheerajtrivedi.github.io/Indway/assets/lt-panel.webp">
 <link rel="icon" href="assets/indway-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -259,6 +266,13 @@
   .range h3 small { display: block; font-size: 15px; font-weight: 500; font-stretch: 100%; color: var(--graphite); letter-spacing: 0; margin-top: 4px; }
   .range p { margin: 0; color: var(--graphite); max-width: 52ch; }
   .range .rating { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* Each row links to its panel page; the link stretches over the whole row */
+  .range li { position: relative; }
+  .range h3 a { text-decoration: none; }
+  .range h3 a::after { content: ""; position: absolute; inset: 0; }
+  .range li:hover h3 a { color: var(--ember); }
+  .range .rating::after { content: " →"; color: var(--arc); }
+  .range__all { margin: 32px 0 0; }
 
   .process { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); counter-reset: step; }
   .process li { counter-increment: step; position: relative; padding: 0 20px 0 0; }
@@ -332,8 +346,11 @@
   .contact dd { margin: 2px 0 0; font-size: 20px; font-weight: 600; }
   .contact dd a { text-decoration: none; }
   .contact dd a:hover { color: var(--arc); }
+  .contact dd.addr { font-size: 16px; font-weight: 500; line-height: 1.45; }
   .contact .btn { background: var(--arc); color: #1c1c1c; margin-top: 8px; justify-self: start; }
   .contact .btn:hover { background: #fff; }
+  .contact .map { grid-column: 1 / -1; width: 100%; max-width: 560px; height: 240px; border-radius: 16px; overflow: hidden; background: #2a2a2a; }
+  .contact .map iframe { display: block; width: 100%; height: 100%; border: 0; }
 
   footer {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
@@ -465,40 +482,41 @@
   <section class="block" id="range">
     <div class="block__head">
       <h2 class="display">One factory, the full LT range.</h2>
-      <p>Every lineup starts from your single-line diagram and load list. We size busbars, breakers and enclosures to your fault level, then build to IEC 61439 and IS 8623.</p>
+      <p>Every lineup starts from your single-line diagram and load list. We size busbars, breakers and enclosures to your fault level, then build to IS 8623.</p>
     </div>
     <ul class="range">
       <li>
-        <h3>Power control centre<small>PCC</small></h3>
+        <h3><a href="lt-panels/pcc-panel/index.html">Power control centre</a><small>PCC</small></h3>
         <p>Main incoming and distribution from transformer and DG sources, with ACB incomers, bus couplers and interlocking.</p>
         <span class="rating">Up to 6300 A</span>
       </li>
       <li>
-        <h3>Motor control centre<small>MCC</small></h3>
+        <h3><a href="lt-panels/mcc-panel/index.html">Motor control centre</a><small>MCC</small></h3>
         <p>DOL, star-delta, soft starter and VFD feeders in fixed or drawout modules, with remote control and status wiring.</p>
         <span class="rating">Up to 4000 A</span>
       </li>
       <li>
-        <h3>Power factor correction<small>APFC</small></h3>
+        <h3><a href="lt-panels/apfc-panel/index.html">Power factor correction</a><small>APFC</small></h3>
         <p>Automatic capacitor banks with a relay controller, detuned reactors and contactor switching to cut reactive power charges.</p>
         <span class="rating">50 to 1000 kVAr</span>
       </li>
       <li>
-        <h3>Distribution boards<small>MLDB, PDB, SDB</small></h3>
+        <h3><a href="lt-panels/distribution-board/index.html">Distribution boards</a><small>MLDB, PDB, SDB</small></h3>
         <p>Main and sub distribution for lighting and power circuits in buildings, hospitals and campuses.</p>
         <span class="rating">Up to 1600 A</span>
       </li>
       <li>
-        <h3>AMF and synchronising<small>DG panels</small></h3>
+        <h3><a href="lt-panels/amf-synchronising-panel/index.html">AMF and synchronising</a><small>DG panels</small></h3>
         <p>Automatic mains failure changeover and multi-DG synchronising with load sharing controllers.</p>
         <span class="rating">Up to 4000 A</span>
       </li>
       <li>
-        <h3>Feeder pillars<small>Outdoor</small></h3>
+        <h3><a href="lt-panels/feeder-pillar/index.html">Feeder pillars</a><small>Outdoor</small></h3>
         <p>Weatherproof enclosures for street lighting, townships and site distribution.</p>
         <span class="rating">IP55 enclosure</span>
       </li>
     </ul>
+    <p class="range__all"><a class="btn btn--ghost" href="lt-panels/index.html">Compare the full LT panel range</a></p>
   </section>
 
   <section class="block" id="process">
@@ -637,9 +655,13 @@
     </div>
     <dl>
       <div><dt>Email</dt><dd><a href="mailto:sales@indway.in">sales@indway.in</a></dd></div>
-      <div><dt>Phone</dt><dd><a href="tel:+910000000000">+91 00000 00000</a></dd></div>
+      <div><dt>Phone</dt><dd><a href="tel:+919870597616">+91 98705 97616</a></dd></div>
+      <div><dt>Address</dt><dd class="addr"><a href="https://maps.app.goo.gl/15yAY2vmVzK5yvjX9" target="_blank" rel="noopener">71/7, A-24, Rama Road Industrial Area,<br>Near Kirti Nagar Metro Station,<br>New Delhi, Delhi 110015</a></dd></div>
       <a class="btn" href="mailto:sales@indway.in?subject=LT%20panel%20enquiry">Email your requirement</a>
     </dl>
+    <div class="map">
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1750!2d77.150558!3d28.6595319!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d0390b4ea78d9%3A0xb09d3ac03a94a468!2sIndway%20Group!5e0!3m2!1sen!2sin!4v1790268389435!5m2!1sen!2sin" title="Indway on Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+    </div>
   </section>
 </main>
 
@@ -2630,8 +2652,8 @@ sections.forEach((sec, si) => {
     relay(upper, dw / 2, 0.42);
     selector(upper, dw / 2, 0.12, si !== 3 ? "R" : "OFF");
     if (si === 1) anchors.feeder = [upper, dw / 2, 0.42, T + 0.05];
-    // On the closed cover's face; the frame loop sinks it onto the bars as the covers open
-    if (si === 2) anchors.busbar = [g, cx, y0 + BH - CH + BUS_Y + BAR_H / 2, FZ + T + 0.01];
+    // Middle of the closed cover's face; the frame loop sinks it onto the bars as the covers open
+    if (si === 2) anchors.busbar = [g, cx, y0 + BH - CH / 2, FZ + T + 0.01];
   }
 
   if (sec.type === "mcc") {
@@ -3166,7 +3188,10 @@ function frame(time) {
     v.copy(anchorPos[s.at]);
     if (s.at === "acb") v.z += acbBody.position.z;
     if (s.at === "mcc") v.z += drawer.position.z - drawer.userData.z0;
-    if (s.at === "busbar") v.z -= (FZ + T + 0.01 - BUS_Z0) * ease(part.doors); // lands on the R phase's front face
+    if (s.at === "busbar") { // lands on the middle of the R phase's front face
+      v.z -= (FZ + T + 0.01 - BUS_Z0) * ease(part.doors);
+      v.y -= (CH / 2 - BUS_Y - BAR_H / 2) * ease(part.doors);
+    }
     // Screen directions of the front face's right and down axes, scaled so the dot's longer side stays full size
     vx.copy(v).x += 0.05; vy.copy(v).y -= 0.05;
     v.project(camera); vx.project(camera); vy.project(camera);

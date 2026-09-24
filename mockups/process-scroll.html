@@ -1,0 +1,1048 @@
+<meta charset="utf-8">
+<title>Drawing to Commissioning</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..900;1,62..125,300..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #F4F4F3;
+    --ink: #262626;
+    --graphite: #5E605F;
+    --steel: #DCDDDB;
+    --line: #E2E3E1;
+    --arc: #EE7D10;
+    --ember: #D4531F;
+    --paper: #FBFBFA;
+    --plate: #EAEBE8;
+    --sheet: #D3D6D2;
+    --bed: #BFC2BE;
+    --coat: #CBD0CC;
+    --screen: #1E1F1E;
+    --r: #D6452B;
+    --y: #E8B420;
+    --b: #2F6FD1;
+    --ok: #2E9E5B;
+    --wide: 125%;
+    --gutter: clamp(16px, 4vw, 56px);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #161716; --ink: #ECECEA; --graphite: #A2A4A1; --steel: #3A3D3A; --line: #2C2E2C;
+      --paper: #1E201E; --plate: #222422; --sheet: #474B47; --bed: #2E312E; --coat: #AEB3AF;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #161716; --ink: #ECECEA; --graphite: #A2A4A1; --steel: #3A3D3A; --line: #2C2E2C;
+    --paper: #1E201E; --plate: #222422; --sheet: #474B47; --bed: #2E312E; --coat: #AEB3AF;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  :focus-visible { outline: 2px solid var(--arc); outline-offset: 3px; border-radius: 2px; }
+  .display { font-stretch: var(--wide); font-weight: 800; letter-spacing: -0.02em; line-height: 1.02; margin: 0; text-wrap: balance; }
+  .eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+
+  /* ---------- Intro / outro ---------- */
+  .intro, .outro { padding: clamp(72px, 12vw, 140px) var(--gutter) 56px; display: grid; gap: 18px; max-width: 1180px; }
+  .intro h1 { font-size: clamp(40px, 7vw, 92px); }
+  .intro .lede { margin: 0; max-width: 58ch; font-size: 19px; color: var(--graphite); }
+  .intro .hint { margin: 8px 0 0; display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--graphite); }
+  .intro .hint::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--arc); box-shadow: 0 0 0 6px color-mix(in srgb, var(--arc) 22%, transparent); flex: none; }
+  .outro { padding-block: 96px 120px; }
+  .outro h2 { font-size: clamp(30px, 4.4vw, 52px); }
+  .outro ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px 40px; max-width: 1080px; }
+  .outro li { border-top: 1.5px solid var(--ink); padding-top: 14px; font-size: 15px; color: var(--graphite); }
+  .outro li b { display: block; color: var(--ink); font-stretch: 112%; font-size: 16px; margin-bottom: 4px; }
+  .outro a { font-size: 15px; font-weight: 600; }
+
+  /* ---------- Scroll track ---------- */
+  .track { position: relative; height: 900vh; }
+  .stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; border-block: 1px solid var(--line); }
+  #world { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 22px var(--gutter) 0; pointer-events: none; }
+  .topbar .title { font-stretch: var(--wide); font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
+  .topbar .pct { font: 600 13px var(--mono); color: var(--graphite); font-variant-numeric: tabular-nums; }
+
+  .card {
+    position: absolute; left: var(--gutter); top: 50%; transform: translateY(-50%);
+    width: 330px; padding: 24px 24px 22px;
+    background: color-mix(in srgb, var(--ground) 88%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--line); border-radius: 14px;
+    display: grid; gap: 12px;
+  }
+  .card__num { display: flex; gap: 6px; align-items: baseline; font: 600 13px var(--mono); color: var(--graphite); font-variant-numeric: tabular-nums; }
+  .card__num .n { color: var(--arc); font-size: 15px; }
+  .card__title { font-size: 34px; }
+  .card__desc { margin: 0; font-size: 15px; color: var(--graphite); max-width: 36ch; }
+  .card .swap { transition: opacity .22s, transform .22s; }
+  .card.is-swapping .swap { opacity: 0; transform: translateY(6px); }
+  .subs { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 7px; font-size: 14px; }
+  .subs li { display: flex; align-items: center; gap: 10px; color: var(--graphite); transition: color .25s; }
+  .subs li::before { content: ""; width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--steel); flex: none; transition: background .25s, border-color .25s, box-shadow .25s; }
+  .subs li.now { color: var(--ink); }
+  .subs li.now::before { border-color: var(--arc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--arc) 18%, transparent); }
+  .subs li.done { color: var(--ink); }
+  .subs li.done::before { background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 7.2l2.3 2.3 4.7-4.9' fill='none' stroke='%23F4F4F3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat; border-color: var(--ink); }
+  .meter { height: 3px; background: var(--steel); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--arc); }
+
+  .rail { position: absolute; left: calc(var(--gutter) + 354px); right: var(--gutter); bottom: 22px; }
+  .rail__line { position: absolute; left: calc(100% / 12); right: calc(100% / 12); top: 11px; height: 2px; background: var(--steel); }
+  .rail__line i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--arc); }
+  .rail ol { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); }
+  .rail button {
+    all: unset; cursor: pointer; display: grid; justify-items: center; gap: 6px; width: 100%;
+    font-size: 13px; color: var(--graphite); text-align: center;
+  }
+  .rail button b {
+    width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    font: 700 11px var(--mono); background: var(--ground); border: 2px solid var(--steel); color: var(--graphite);
+    transition: background .3s, border-color .3s, color .3s, box-shadow .3s;
+  }
+  .rail button.reached b { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+  .rail button.now b { background: var(--arc); border-color: var(--arc); color: #1c1c1c; box-shadow: 0 0 0 5px color-mix(in srgb, var(--arc) 22%, transparent); }
+  .rail button.now span, .rail button:hover span { color: var(--ink); }
+  .rail button:focus-visible { outline: none; }
+  .rail button:focus-visible b { outline: 2px solid var(--arc); outline-offset: 3px; }
+
+  @media (max-width: 900px) {
+    .card { top: auto; bottom: 12px; left: 12px; right: 12px; width: auto; transform: none; padding: 16px 16px 14px; gap: 8px; }
+    .card__title { font-size: 26px; }
+    .card__desc { font-size: 14px; }
+    .subs { grid-template-columns: 1fr 1fr; gap: 5px 12px; font-size: 13px; }
+    .rail { left: 12px; right: 12px; bottom: auto; top: 54px; }
+    .rail button span { display: none; }
+    .topbar { padding: 16px 16px 0; }
+  }
+
+  /* ---------- World drawing ---------- */
+  #world text { font-family: "Archivo", system-ui, sans-serif; }
+  .ln, .lk, .lt, .hot, .solid, .glass, .cable, .wire { stroke-linecap: round; stroke-linejoin: round; }
+  .ln { fill: none; stroke: var(--graphite); stroke-width: 2.5; }
+  .lk { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+  .lt { fill: none; stroke: var(--steel); stroke-width: 2.5; }
+  .hot { fill: none; stroke: var(--arc); stroke-width: 3; }
+  .solid { fill: var(--ground); stroke: var(--ink); stroke-width: 2.5; }
+  .fk { fill: var(--ink); }
+  .glass { fill: color-mix(in srgb, #fff 40%, transparent); stroke: var(--ink); stroke-width: 3; }
+  .guide { fill: none; stroke: none; }
+  .paper { fill: var(--paper); stroke: var(--ink); stroke-width: 2.5; }
+  .plan { fill: var(--plate); stroke: var(--line); stroke-width: 2; }
+  .inset { fill: none; stroke: var(--steel); stroke-width: 2; stroke-dasharray: 6 6; }
+  .t { fill: var(--graphite); font-size: 15px; font-weight: 500; }
+  .t.k { fill: var(--ink); }
+  .t.b { font-weight: 700; }
+  .t.sm { font-size: 13px; }
+  .t.xs { font-size: 9px; font-weight: 700; }
+  .t.cap { font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+  .t.m { font-family: var(--mono); font-weight: 600; }
+  .done { stroke: var(--ink); }
+  .pop { opacity: 0; transition: opacity .25s; }
+  .pop.on { opacity: 1; }
+  .lamp { fill: var(--steel); transition: fill .3s, filter .3s; }
+  .lamp.on { fill: var(--c, var(--arc)); filter: drop-shadow(0 0 6px var(--c, var(--arc))); }
+  .spk, .pulse { fill: var(--arc); }
+  .pulse { filter: drop-shadow(0 0 5px var(--arc)); }
+
+  .rail-base { fill: none; stroke: var(--steel); stroke-width: 6; stroke-linecap: round; }
+  .rail-live { fill: none; stroke: var(--arc); stroke-width: 6; stroke-linecap: round; }
+  .station circle { fill: var(--ground); stroke: var(--steel); stroke-width: 3; transition: fill .3s, stroke .3s; }
+  .station text { font: 700 14px var(--mono); fill: var(--graphite); text-anchor: middle; transition: fill .3s; }
+  .station.reached circle { fill: var(--ink); stroke: var(--ink); }
+  .station.reached text { fill: var(--ground); }
+  .station.now circle { fill: var(--arc); stroke: var(--arc); }
+  .station.now text { fill: #1c1c1c; }
+  .tok-halo { fill: var(--arc); opacity: .22; animation: halo 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .tok-core { fill: var(--arc); stroke: var(--ground); stroke-width: 3; }
+  @keyframes halo { 50% { transform: scale(1.5); opacity: .08; } }
+
+  /* Review */
+  .rowt { transition: fill .25s; }
+  .rowt.ok { fill: var(--ink); }
+  .clip-top { fill: var(--ink); }
+  .lt-room { transition: stroke .3s, fill .3s; }
+  .lt-room.on { stroke: var(--arc); stroke-dasharray: 8 6; fill: color-mix(in srgb, var(--arc) 10%, var(--ground)); }
+  .dot { fill: var(--arc); }
+  .walker { fill: var(--arc); stroke: var(--ground); stroke-width: 3; }
+  .ring { fill: none; stroke: var(--arc); stroke-width: 3; }
+  .pin-body { fill: var(--arc); }
+  .pin-eye { fill: var(--ground); }
+  .roadline { fill: none; stroke: var(--bed); stroke-width: 2.5; }
+
+  /* Engineering */
+  .bus { fill: none; stroke: var(--arc); stroke-width: 7; stroke-linecap: round; }
+  .stamp-ring { fill: color-mix(in srgb, var(--arc) 8%, transparent); stroke: var(--arc); stroke-width: 3.5; }
+  .stamp-text { fill: var(--arc); font-weight: 800; font-size: 15px; letter-spacing: .08em; text-anchor: middle; font-stretch: 112%; }
+
+  /* Fabrication */
+  .bed { fill: var(--bed); stroke: var(--ink); stroke-width: 2.5; }
+  .slat { stroke: color-mix(in srgb, var(--ink) 18%, transparent); stroke-width: 2; }
+  .raw, .sheet { fill: var(--sheet); stroke: var(--ink); stroke-width: 2; }
+  .shade { fill: var(--ink); }
+  .hole { fill: var(--bed); opacity: 0; }
+  .hole.on { opacity: 1; }
+  .cut { fill: none; stroke: var(--arc); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .cut.done { stroke: var(--ink); stroke-width: 2; }
+  .bendline { fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .gantry { fill: color-mix(in srgb, var(--ink) 14%, transparent); stroke: var(--ink); stroke-width: 2; }
+  .coat { fill: var(--coat); }
+  .bead { fill: var(--arc); }
+  .flash { fill: #FFD27A; filter: drop-shadow(0 0 10px var(--arc)); }
+  .mist { fill: var(--coat); stroke: color-mix(in srgb, var(--ink) 30%, transparent); stroke-width: .8; }
+  .cone { fill: var(--coat); opacity: .35; }
+  .heat { fill: none; stroke: var(--ember); stroke-width: 2.5; stroke-linecap: round; }
+  .oven-glow { fill: var(--ember); }
+
+  /* Assembly / testing */
+  .coatfill { fill: var(--coat); stroke: var(--ink); stroke-width: 2.5; }
+  .backfill { fill: color-mix(in srgb, var(--coat) 70%, var(--ink)); stroke: var(--ink); stroke-width: 2.5; }
+  .bar { stroke: var(--ink); stroke-width: 1.5; }
+  .wire { fill: none; stroke-width: 2.5; }
+  .w-r { stroke: var(--r); }
+  .w-k { stroke: var(--ink); }
+  .w-g { stroke: var(--graphite); }
+  .ferrule { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+  .screen { fill: var(--screen); }
+  .readout { fill: var(--arc); font-family: var(--mono); font-weight: 700; font-size: 21px; text-anchor: middle; }
+  .tick-box { fill: var(--ground); stroke: var(--graphite); stroke-width: 2; }
+
+  /* Commissioning */
+  .road { fill: none; stroke: var(--steel); stroke-width: 26; stroke-linecap: round; }
+  .lane { fill: none; stroke: var(--ground); stroke-width: 2.5; stroke-dasharray: 10 10; }
+  .cable { fill: none; stroke: var(--ink); stroke-width: 4; }
+  .trench { fill: none; stroke: var(--graphite); stroke-width: 2; stroke-dasharray: 5 6; }
+  .win { fill: var(--plate); stroke: var(--graphite); stroke-width: 1.5; transition: fill .35s, filter .35s; }
+  .win.on { fill: #F2C14E; filter: drop-shadow(0 0 5px #F2C14E); }
+  .hook { stroke: var(--ink); stroke-width: 2; }
+</style>
+
+<header class="intro">
+  <p class="eyebrow">Indway · Process section · scroll mockup</p>
+  <h1 class="display">From drawing to commissioning.</h1>
+  <p class="lede">You get approval drawings before we cut steel, and an open invitation to witness the tests before we ship.</p>
+  <p class="hint">Scroll to follow one PCC panel from load list to handover. Scroll back up and every step runs in reverse.</p>
+</header>
+
+<section class="track" id="track" aria-label="From drawing to commissioning, scroll animation">
+  <div class="stage" id="stage">
+    <svg id="world" aria-hidden="true">
+      <g id="scenes">
+
+        <!-- 01 Review: magnifier reads the load list, the total adds up, then a site walk ends in a pin on the LT room -->
+        <g class="scene" data-scene="review">
+          <rect class="solid" x="110" y="100" width="320" height="440" rx="12"/>
+          <rect class="clip-top" x="210" y="84" width="120" height="34" rx="8"/>
+          <text class="t cap" x="140" y="152">LOAD LIST · PLOT 14, CHAKAN</text>
+          <path class="lt" d="M140 168H400"/>
+          <g class="rows"></g>
+          <path class="ln" d="M140 452H400"/>
+          <text class="t k b" x="140" y="486">Connected load</text>
+          <text class="t k m tot" x="400" y="486" text-anchor="end">0 kW</text>
+
+          <g class="site">
+            <rect class="plan" x="520" y="100" width="400" height="440" rx="6"/>
+            <path class="roadline" d="M520 416H920M520 440H920M688 100V416M712 100V416"/>
+            <g class="bld"><rect class="solid" x="540" y="120" width="130" height="276" rx="3"/><text class="t sm" x="552" y="146">Production hall</text></g>
+            <g class="bld"><rect class="solid" x="730" y="120" width="170" height="120" rx="3"/><text class="t sm" x="742" y="146">Chiller yard</text></g>
+            <g class="bld"><rect class="solid lt-room" x="730" y="262" width="92" height="134" rx="3"/><text class="t sm" x="742" y="288">LT room</text></g>
+            <g class="bld"><rect class="solid" x="838" y="262" width="62" height="70" rx="3"/><text class="t sm" x="852" y="288">TX</text></g>
+            <path class="hot run" d="M869 332V404H776V396"/>
+            <text class="t sm k run-label" x="730" y="476">Cable run from TX: 38 m</text>
+            <g class="compass" transform="translate(884 500)"><circle class="solid" r="18"/><path class="fk" d="M0-13L5 3H-5Z"/><text class="t xs" y="-24" text-anchor="middle">N</text></g>
+            <circle class="ring" cx="776" cy="330" r="8" style="opacity:0"/>
+          </g>
+          <g class="walk"></g>
+          <path class="guide walk-route" d="M430 320C480 320 480 428 520 428H776V400"/>
+          <circle class="walker" r="7" style="opacity:0"/>
+          <g class="pin" style="opacity:0"><path class="pin-body" d="M0 0C-8-10-12-15-12-21A12 12 0 0 1 12-21C12-15 8-10 0 0Z"/><circle class="pin-eye" cy="-21" r="4.5"/></g>
+          <g class="mag" style="opacity:0"><circle class="glass" r="30"/><path class="lk" style="stroke-width:7" d="M22 22L44 44"/></g>
+        </g>
+
+        <!-- 02 Engineering: sheet unrolls, a pen plots the SLD and the GA, the approval stamp lands -->
+        <g class="scene" data-scene="engineering">
+          <defs><clipPath id="unroll"><rect class="unroll" x="40" y="40" width="920" height="0"/></clipPath></defs>
+          <g clip-path="url(#unroll)">
+            <rect class="paper" x="60" y="50" width="880" height="500" rx="4"/>
+            <path class="lt" d="M76 66H924V534H76Z"/>
+            <path class="ln" d="M700 470H924M700 470V534M700 496H924M812 496V534"/>
+            <text class="t k b sm tb" x="712" y="489">INDWAY · IW-0412 · SLD + GA</text>
+            <text class="t sm tb" x="712" y="520">Rev B · Drawn DT</text>
+            <text class="t sm tb" x="824" y="520">Scale NTS</text>
+
+            <path class="ln plot" d="M318 108a22 22 0 1 0 44 0a22 22 0 1 0-44 0"/>
+            <path class="ln plot" data-pop=".lb-tx@1" d="M318 138a22 22 0 1 0 44 0a22 22 0 1 0-44 0"/>
+            <path class="lk plot" data-pop=".acb@.35" d="M340 160V270"/>
+            <path class="bus plot" data-pop=".lb-bus@1" d="M130 270H550"/>
+            <path class="lk plot" data-pop=".mc0@.3 .lf0@1" d="M170 270V402"/>
+            <path class="lk plot" data-pop=".mc1@.3 .lf1@1" d="M270 270V402"/>
+            <path class="lk plot" data-pop=".mc2@.3 .lf2@1" d="M370 270V402"/>
+            <path class="lk plot" data-pop=".mc3@.3 .lf3@1" d="M470 270V402"/>
+            <path class="ln plot" data-pop=".ml0@1" d="M152 420a18 18 0 1 0 36 0a18 18 0 1 0-36 0"/>
+            <path class="ln plot" data-pop=".ml1@1" d="M252 420a18 18 0 1 0 36 0a18 18 0 1 0-36 0"/>
+            <path class="ln plot" data-pop=".ml2@1" d="M352 420a18 18 0 1 0 36 0a18 18 0 1 0-36 0"/>
+            <path class="ln plot" data-pop=".ml3@1" d="M452 420a18 18 0 1 0 36 0a18 18 0 1 0-36 0"/>
+            <path class="lk plot" data-pop=".lb-ga@0" d="M660 90H860V410H660Z"/>
+            <path class="ln plot" d="M660 170H820M660 250H820M660 330H820M820 90V410"/>
+            <path class="ln plot" d="M688 130a10 10 0 1 0 20 0a10 10 0 1 0-20 0M718 130a10 10 0 1 0 20 0a10 10 0 1 0-20 0M748 130a10 10 0 1 0 20 0a10 10 0 1 0-20 0"/>
+            <path class="lk plot" d="M806 196V222M806 276V302M806 356V382"/>
+            <path class="ln plot" data-pop=".dim-v@1" d="M885 90V410M878 90H892M878 410H892"/>
+            <path class="ln plot" data-pop=".dim-h@1" d="M660 434H860M660 427V441M860 427V441"/>
+
+            <text class="t sm pop lb-tx" x="374" y="128">630 kVA, 11/0.433 kV</text>
+            <g class="pop acb"><rect class="solid" x="326" y="196" width="28" height="36" rx="2"/><path class="lk" d="M331 202L349 226M349 202L331 226"/><text class="t sm" x="364" y="220">ACB 1000 A, 4P</text></g>
+            <text class="t sm k b pop lb-bus" x="560" y="275">1600 A</text>
+            <g class="pop mc0"><rect class="solid" x="159" y="302" width="22" height="30" rx="2"/><path class="lk" d="M164 312H176"/></g>
+            <g class="pop mc1"><rect class="solid" x="259" y="302" width="22" height="30" rx="2"/><path class="lk" d="M264 312H276"/></g>
+            <g class="pop mc2"><rect class="solid" x="359" y="302" width="22" height="30" rx="2"/><path class="lk" d="M364 312H376"/></g>
+            <g class="pop mc3"><rect class="solid" x="459" y="302" width="22" height="30" rx="2"/><path class="lk" d="M464 312H476"/></g>
+            <text class="t k b pop ml0" x="170" y="425" text-anchor="middle">M</text>
+            <text class="t k b pop ml1" x="270" y="425" text-anchor="middle">M</text>
+            <text class="t k b pop ml2" x="370" y="425" text-anchor="middle">L</text>
+            <text class="t k b pop ml3" x="470" y="425" text-anchor="middle">P</text>
+            <g class="pop lf0"><text class="t sm k" x="170" y="462" text-anchor="middle">Chiller</text><text class="t sm m" x="170" y="480" text-anchor="middle">250 A</text></g>
+            <g class="pop lf1"><text class="t sm k" x="270" y="462" text-anchor="middle">AHUs</text><text class="t sm m" x="270" y="480" text-anchor="middle">160 A</text></g>
+            <g class="pop lf2"><text class="t sm k" x="370" y="462" text-anchor="middle">Lighting</text><text class="t sm m" x="370" y="480" text-anchor="middle">125 A</text></g>
+            <g class="pop lf3"><text class="t sm k" x="470" y="462" text-anchor="middle">Pumps</text><text class="t sm m" x="470" y="480" text-anchor="middle">100 A</text></g>
+            <text class="t cap pop lb-ga" x="660" y="80">GA · FRONT VIEW</text>
+            <text class="t sm m pop dim-v" x="904" y="256" transform="rotate(-90 904 250)" text-anchor="middle">2100</text>
+            <text class="t sm m pop dim-h" x="760" y="456" text-anchor="middle">1200 × 600</text>
+          </g>
+          <circle class="ring splash" cx="590" cy="470" r="46" style="opacity:0"/>
+          <g class="stamp" style="opacity:0"><circle class="stamp-ring" r="46"/><circle class="hot" r="38" style="stroke-width:1.5"/><text class="stamp-text" y="2">APPROVED</text><text class="stamp-text" y="20" style="font-size:10px">CLIENT · REV B</text></g>
+          <g class="pen" style="opacity:0"><path class="solid" d="M0 0L6-16L40-56L50-46L16-10Z"/><path class="lk" d="M6-16L16-10"/><path class="hot" d="M0 0L2-5"/></g>
+        </g>
+
+        <!-- 03 Fabrication: laser cuts the door blank, flanges bend, corners weld, powder coat is sprayed along a raster path, then it cures -->
+        <g class="scene" data-scene="fabrication">
+          <defs>
+            <mask id="coatMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="640">
+              <path class="brush" d="M180 180H620V270H180V360H620V450H180" fill="none" stroke="#fff" stroke-width="100"/>
+            </mask>
+          </defs>
+          <rect class="bed" x="150" y="60" width="500" height="490" rx="6"/>
+          <g class="slats"></g>
+          <rect class="raw" x="170" y="84" width="460" height="442" rx="2"/>
+          <rect class="sheet" x="228" y="138" width="344" height="334"/>
+          <polygon class="sheet fl"/><polygon class="sheet fl"/><polygon class="sheet fl"/><polygon class="sheet fl"/>
+          <polygon class="shade fl-s" style="opacity:0"/><polygon class="shade fl-s" style="opacity:0"/><polygon class="shade fl-s" style="opacity:0"/><polygon class="shade fl-s" style="opacity:0"/>
+          <g class="holes"></g>
+          <path class="coat" mask="url(#coatMask)" fill-rule="evenodd"/>
+          <path class="bendline" d="M228 138H572V472H228Z"/>
+          <path class="cut" d="M284 200a26 26 0 1 0 52 0a26 26 0 1 0-52 0"/>
+          <path class="cut" d="M374 200a26 26 0 1 0 52 0a26 26 0 1 0-52 0"/>
+          <path class="cut" d="M464 200a26 26 0 1 0 52 0a26 26 0 1 0-52 0"/>
+          <path class="cut" d="M331 272a9 9 0 1 0 18 0a9 9 0 1 0-18 0"/>
+          <path class="cut" d="M391 272a9 9 0 1 0 18 0a9 9 0 1 0-18 0"/>
+          <path class="cut" d="M451 272a9 9 0 1 0 18 0a9 9 0 1 0-18 0"/>
+          <path class="cut" d="M530 300H542V370H530Z"/>
+          <path class="cut" d="M300 398H500A4 4 0 0 1 500 406H300A4 4 0 0 1 300 398Z"/>
+          <path class="cut" d="M300 416H500A4 4 0 0 1 500 424H300A4 4 0 0 1 300 416Z"/>
+          <path class="cut" d="M300 434H500A4 4 0 0 1 500 442H300A4 4 0 0 1 300 434Z"/>
+          <path class="cut" d="M300 452H500A4 4 0 0 1 500 460H300A4 4 0 0 1 300 452Z"/>
+          <path class="cut outline" d="M228 110H572V138H600V472H572V500H228V472H200V138H228Z"/>
+          <g class="beads"></g>
+          <rect class="gantry" x="-17" y="48" width="34" height="514" rx="4"/>
+          <g class="head"><rect class="solid" x="-14" y="-38" width="28" height="26" rx="4"/><path class="solid" d="M-8-12H8L3 -3H-3Z"/><circle class="flash beam" r="5"/></g>
+          <g class="sparks"></g>
+          <path class="guide weld-route" d="M228 138H572V472H228Z"/>
+          <g class="torch" style="opacity:0"><circle class="flash tflash" r="14"/><path class="lk" style="stroke-width:6" d="M4-4L30-34"/><rect class="solid" x="26" y="-52" width="16" height="24" rx="3" transform="rotate(40 34 -40)"/></g>
+          <g class="wsparks"></g>
+          <path class="guide gun-route" d="M180 180H620V270H180V360H620V450H180"/>
+          <g class="mistg"></g>
+          <g class="gun" style="opacity:0"><circle class="cone" r="46"/><rect class="solid" x="-9" y="-40" width="18" height="30" rx="4"/><path class="lk" d="M0-10V-2"/><circle class="fk" r="5"/></g>
+
+          <rect class="inset" x="680" y="70" width="260" height="240" rx="8"/>
+          <text class="t cap" x="696" y="98">PRESS BRAKE</text>
+          <rect class="solid" x="762" y="236" width="96" height="36" rx="2"/>
+          <path class="ln" d="M785 236V254H835V236"/>
+          <g class="punch"><rect class="solid" x="792" y="140" width="36" height="86" rx="2"/><path class="lk" d="M792 160H828"/></g>
+          <polyline class="lk profile" style="stroke-width:5"/>
+          <text class="t k m bend-angle" x="810" y="296" text-anchor="middle">0°</text>
+
+          <rect class="inset" x="680" y="330" width="260" height="220" rx="8"/>
+          <text class="t cap" x="696" y="356">CURE OVEN</text>
+          <rect class="solid" x="696" y="368" width="228" height="120" rx="6"/>
+          <rect class="oven-glow" x="712" y="380" width="110" height="96" rx="3" style="opacity:0"/>
+          <rect class="glass" x="712" y="380" width="110" height="96" rx="3"/>
+          <rect class="coatfill" x="749" y="392" width="36" height="72" rx="2"/>
+          <path class="heat" d="M728 468q6-8 0-16t0-16"/>
+          <path class="heat" d="M806 468q6-8 0-16t0-16"/>
+          <text class="t k m temp" x="838" y="414" style="font-size:20px">20 °C</text>
+          <text class="t m timer" x="838" y="442">10:00</text>
+          <text class="t sm" x="838" y="468">180 °C</text>
+          <g class="swatch pop"><rect class="coatfill" x="696" y="504" width="26" height="26" rx="4"/><text class="t sm k" x="732" y="522">RAL 7035 light grey</text></g>
+        </g>
+
+        <!-- 04 Assembly: busbars slide in, switchgear flies from the trolley along curved paths, wiring is routed, the door swings shut -->
+        <g class="scene" data-scene="assembly">
+          <rect class="solid" x="400" y="50" width="300" height="490" rx="4" style="stroke-width:3"/>
+          <rect class="plan" x="416" y="66" width="268" height="458" rx="2"/>
+          <g class="pop ins"><rect class="solid" x="446" y="80" width="10" height="76" rx="2"/><rect class="solid" x="644" y="80" width="10" height="76" rx="2"/></g>
+          <g class="bars"></g>
+          <path class="ln" style="stroke-width:6" d="M426 422H674"/>
+          <g class="mcbs"></g>
+          <rect class="solid" x="430" y="488" width="240" height="16" rx="2"/>
+          <path class="ln" style="stroke-width:1.5" d="M442 490V502M454 490V502M466 490V502M478 490V502M490 490V502M502 490V502M514 490V502M526 490V502M538 490V502M550 490V502M562 490V502M574 490V502M586 490V502M598 490V502M610 490V502M622 490V502M634 490V502M646 490V502M658 490V502"/>
+          <g class="wires"></g>
+          <g class="mods">
+            <g class="mod acb" data-s="125 440" data-t="495 230"><rect class="solid" x="-65" y="-50" width="130" height="100" rx="5"/><rect class="ln" x="-52" y="-38" width="104" height="50" rx="3"/><rect class="fk" x="-14" y="-28" width="28" height="30" rx="3"/><circle cx="-38" cy="32" r="7" style="fill:var(--ok)"/><circle cx="-18" cy="32" r="7" style="fill:var(--r)"/><text class="t sm k m" x="42" y="37" text-anchor="end">1000 A</text></g>
+            <g class="mod" data-s="205 450" data-t="457 340"><rect class="solid" x="-27" y="-40" width="54" height="80" rx="4"/><rect class="ln" x="-18" y="-28" width="36" height="30" rx="2"/><rect class="fk" x="-5" y="-20" width="10" height="14" rx="2"/><text class="t xs m" y="26" text-anchor="middle" style="fill:var(--ink)">250</text></g>
+            <g class="mod" data-s="211 444" data-t="521 340"><rect class="solid" x="-27" y="-40" width="54" height="80" rx="4"/><rect class="ln" x="-18" y="-28" width="36" height="30" rx="2"/><rect class="fk" x="-5" y="-20" width="10" height="14" rx="2"/><text class="t xs m" y="26" text-anchor="middle" style="fill:var(--ink)">160</text></g>
+            <g class="mod" data-s="217 438" data-t="585 340"><rect class="solid" x="-27" y="-40" width="54" height="80" rx="4"/><rect class="ln" x="-18" y="-28" width="36" height="30" rx="2"/><rect class="fk" x="-5" y="-20" width="10" height="14" rx="2"/><text class="t xs m" y="26" text-anchor="middle" style="fill:var(--ink)">125</text></g>
+            <g class="mod" data-s="223 432" data-t="649 340"><rect class="solid" x="-27" y="-40" width="54" height="80" rx="4"/><rect class="ln" x="-18" y="-28" width="36" height="30" rx="2"/><rect class="fk" x="-5" y="-20" width="10" height="14" rx="2"/><text class="t xs m" y="26" text-anchor="middle" style="fill:var(--ink)">100</text></g>
+          </g>
+          <rect class="solid" x="60" y="492" width="190" height="10" rx="2"/>
+          <path class="ln" d="M72 502V540M238 502V540"/>
+          <circle class="solid" cx="72" cy="548" r="8"/><circle class="solid" cx="238" cy="548" r="8"/>
+          <text class="t cap" x="60" y="590">PARTS TROLLEY</text>
+          <g class="door"><g class="door-front"></g><g class="door-back"><rect class="backfill" width="300" height="490" rx="4"/><path class="ln" d="M24 24H276V466H24Z"/></g></g>
+        </g>
+
+        <!-- 05 Testing: probe arcs to each phase for IR, the HV dial ramps and holds, the functional run lights the panel, the QC tag swings on -->
+        <g class="scene" data-scene="testing">
+          <g class="panel-front" transform="translate(120 60)"></g>
+          <path class="lk" d="M180 550V564M270 550V564M360 550V564"/>
+          <circle class="solid" cx="180" cy="570" r="6"/><circle class="solid" cx="270" cy="570" r="6"/><circle class="solid" cx="360" cy="570" r="6"/>
+          <text class="t sm k b" x="180" y="598" text-anchor="middle">R</text><text class="t sm k b" x="270" y="598" text-anchor="middle">Y</text><text class="t sm k b" x="360" y="598" text-anchor="middle">B</text>
+          <g class="qctag" style="opacity:0"><path class="lk" d="M0 0V10"/><rect class="solid" x="-15" y="10" width="30" height="38" rx="4"/><circle class="lk" cy="17" r="2"/><text class="t xs" y="32" text-anchor="middle" style="fill:var(--ink)">QC</text><path class="hot" d="M-6 38l4 4 8-8"/></g>
+
+          <text class="t cap" x="680" y="92">HV WITHSTAND · 2.5 kV</text>
+          <path class="lt" style="stroke-width:8" d="M680 210A100 100 0 0 1 880 210"/>
+          <path class="hot kv-arc" style="stroke-width:8" d="M680 210A100 100 0 0 1 880 210"/>
+          <g class="dial-ticks"></g>
+          <g class="kv-needle" transform="translate(780 210) rotate(-90)"><path class="lk" style="stroke-width:3.5" d="M0 10V-86"/></g>
+          <circle class="fk" cx="780" cy="210" r="7"/>
+          <text class="t k m kv-read" x="780" y="252" text-anchor="middle" style="font-size:20px">0.00 kV</text>
+          <circle class="lt" cx="920" cy="150" r="24" style="stroke-width:4"/>
+          <circle class="hot hold" cx="920" cy="150" r="24" style="stroke-width:4" transform="rotate(-90 920 150)"/>
+          <text class="t k m hold-t" x="920" y="155" text-anchor="middle" style="font-size:13px">60 s</text>
+
+          <rect class="solid" x="520" y="330" width="220" height="190" rx="12"/>
+          <rect class="screen" x="540" y="350" width="180" height="64" rx="6"/>
+          <text class="readout ir-read" x="630" y="390">----</text>
+          <text class="t cap" x="540" y="444">IR TESTER · 1 kV</text>
+          <g class="knob" transform="translate(580 482) rotate(-40)"><circle class="solid" r="18"/><path class="lk" d="M0-6V-15"/></g>
+          <circle class="solid" cx="668" cy="482" r="7"/><circle class="fk" cx="704" cy="482" r="7"/>
+          <path class="lk lead" style="stroke-width:2.5"/>
+          <circle class="pulse" r="4" style="opacity:0"/><circle class="pulse" r="4" style="opacity:0"/><circle class="pulse" r="4" style="opacity:0"/>
+          <g class="probe"><path class="hot" d="M0 0H12"/><rect class="solid" x="12" y="-6" width="34" height="12" rx="3"/><path class="lk" d="M22-8V8"/></g>
+
+          <text class="t cap" x="780" y="346">TEST SHEET</text>
+          <g class="checks"></g>
+        </g>
+
+        <!-- 06 Commissioning: truck drives the road, the hoist sets the panel on its plinth, cables go in, power reaches the building, the report is signed -->
+        <g class="scene" data-scene="commissioning">
+          <path class="lt" d="M0 470C120 420 220 440 330 430S560 380 700 420S900 400 1000 430"/>
+          <path class="ln" d="M20 560H990"/>
+          <path class="solid" d="M40 560V470L80 440V470L120 440V470L160 440V470L200 440V560Z"/>
+          <rect class="solid" x="56" y="400" width="14" height="52"/>
+          <text class="t cap" x="44" y="590">INDWAY WORKS</text>
+          <path class="road" d="M200 552C300 552 320 480 430 480S560 545 640 545"/>
+          <path class="lane road-path" d="M200 552C300 552 320 480 430 480S560 545 640 545"/>
+          <rect class="plan" x="700" y="380" width="150" height="180"/>
+          <rect class="fk" x="692" y="372" width="166" height="8" rx="2"/>
+          <path class="lk" d="M700 380V560M850 380V560"/>
+          <rect class="solid" x="750" y="548" width="50" height="12"/>
+          <text class="t cap" x="706" y="398">LT ROOM</text>
+          <path class="lk" style="stroke-width:5" d="M600 350H822M600 350V560M822 350V372"/>
+          <rect class="fk trolley" x="-10" y="344" width="20" height="12" rx="2"/>
+          <path class="hook" d=""/>
+          <rect class="solid" x="880" y="140" width="110" height="420"/>
+          <g class="wins"></g>
+          <path class="trench" d="M700 584H960"/>
+          <path class="cable" d="M775 556V584H935V560"/>
+          <circle class="pulse cp" r="5" style="opacity:0"/><circle class="pulse cp" r="5" style="opacity:0"/><circle class="pulse cp" r="5" style="opacity:0"/>
+          <g class="truck">
+            <rect class="solid" x="-50" y="-16" width="62" height="6" rx="1"/>
+            <path class="solid" d="M14-10V-36H32L42-24V-10Z"/>
+            <path class="ln" d="M20-32H30L36-24H20Z"/>
+            <rect class="fk" x="-50" y="-10" width="92" height="5"/>
+            <g transform="translate(-34 -4)"><circle class="solid" r="8"/><path class="lk spoke" d="M-5 0H5M0-5V5"/></g>
+            <g transform="translate(28 -4)"><circle class="solid" r="8"/><path class="lk spoke" d="M-5 0H5M0-5V5"/></g>
+          </g>
+          <path class="guide unload" d="M621 529V460Q621 440 641 440H755Q775 440 775 460V548"/>
+          <g class="cpanel"><rect class="coatfill" x="-18" y="-56" width="36" height="56" rx="2"/><path class="ln" style="stroke-width:1.5" d="M-14-36H14"/><circle class="lamp" style="--c:var(--r)" cx="-9" cy="-46" r="3.2"/><circle class="lamp" style="--c:var(--y)" cx="0" cy="-46" r="3.2"/><circle class="lamp" style="--c:var(--b)" cx="9" cy="-46" r="3.2"/><rect class="fk" x="12" y="-30" width="3" height="12" rx="1"/></g>
+          <g class="report" style="opacity:0">
+            <rect class="solid" width="190" height="232" rx="6"/>
+            <text class="t cap k" x="16" y="30">COMMISSIONING</text>
+            <text class="t cap" x="16" y="46">REPORT · PCC-1</text>
+            <path class="lt" d="M16 58H174"/>
+            <text class="t sm" x="16" y="82">IR, R–E</text><text class="t sm k m" x="174" y="82" text-anchor="end">548 MΩ</text>
+            <text class="t sm" x="16" y="106">HV, 60 s</text><text class="t sm k m" x="174" y="106" text-anchor="end">2.5 kV</text>
+            <text class="t sm" x="16" y="130">Phase seq.</text><text class="t sm k m" x="174" y="130" text-anchor="end">R-Y-B</text>
+            <text class="t sm" x="16" y="154">Handover load</text><text class="t sm k m" x="174" y="154" text-anchor="end">316 kW</text>
+            <path class="lt" d="M16 208H120"/>
+            <path class="lk sig" d="M18 200c10-18 16-18 14 0s8-14 14-7 6 11 14 0 10-9 16 2 8-6 14-4"/>
+            <text class="t xs" x="16" y="222" style="fill:var(--graphite)">CLIENT SIGN-OFF</text>
+            <g class="pop hand"><circle class="stamp-ring" cx="152" cy="196" r="22"/><text class="stamp-text" x="152" y="201" style="font-size:13px">OK</text></g>
+          </g>
+        </g>
+      </g>
+      <g id="rail"></g>
+      <g id="stations"></g>
+      <g id="token"><circle class="tok-halo" r="20"/><circle class="tok-core" r="9"/></g>
+    </svg>
+
+    <div class="topbar"><span class="title">From drawing to commissioning.</span><span class="pct" id="pct">0%</span></div>
+
+    <aside class="card" id="card" aria-live="polite">
+      <div class="card__num swap"><span class="n" id="cNum">01</span><span>/ 06</span></div>
+      <h2 class="card__title display swap" id="cTitle">Review</h2>
+      <p class="card__desc swap" id="cDesc"></p>
+      <ol class="subs swap" id="cSubs"></ol>
+      <div class="meter"><i id="cMeter"></i></div>
+    </aside>
+
+    <nav class="rail" id="railNav" aria-label="Jump to a step">
+      <div class="rail__line"><i id="railFill"></i></div>
+      <ol id="railList"></ol>
+    </nav>
+  </div>
+</section>
+
+<footer class="outro">
+  <h2 class="display">How this mockup behaves.</h2>
+  <ul>
+    <li><b>Scroll scrubs every step</b>Each scene is drawn from its scroll position, so it plays forward as you scroll down and in reverse as you scroll up.</li>
+    <li><b>One motion path</b>An orange node travels a single line that runs under all six scenes. The camera follows it and eases from one scene to the next.</li>
+    <li><b>Reduced motion</b>With reduced motion on, scroll smoothing and the ambient sparks, spray and heat shimmer switch off. Scenes still follow the scroll.</li>
+  </ul>
+  <a href="#track">Back to the start</a>
+</footer>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const seg = (p, a, b) => clamp((p - a) / (b - a));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const E = {
+    io: (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+    out: (t) => 1 - Math.pow(1 - t, 3),
+    back: (t) => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2),
+    bounce: (t) => {
+      const n = 7.5625, d = 2.75;
+      if (t < 1 / d) return n * t * t;
+      if (t < 2 / d) return n * (t -= 1.5 / d) * t + .75;
+      if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + .9375;
+      return n * (t -= 2.625 / d) * t + .984375;
+    },
+  };
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const T = (el, x, y, r = 0, s = 1) => el.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${r.toFixed(2)}) scale(${s.toFixed(3)})`);
+  const op = (el, v) => { v = Math.round(v * 1000) / 1000; if (el._o !== v) { el._o = v; el.style.opacity = v; } };
+  const on = (el, v) => el.classList.toggle("on", !!v);
+  const len = (p) => p._L ??= p.getTotalLength();
+  const prep = (p) => { const l = len(p); p.style.strokeDasharray = `${l} ${l}`; p.style.strokeDashoffset = l; p.style.visibility = "hidden"; };
+  const draw = (p, k) => { if (p._k === k) return; p._k = k; p.style.strokeDashoffset = (len(p) * (1 - k)).toFixed(2); p.style.visibility = k > 0 ? "visible" : "hidden"; };
+  const pt = (p, k) => {
+    const l = len(p), d = clamp(k) * l;
+    const c = p.getPointAtLength(d), a = p.getPointAtLength(Math.max(0, d - .8)), b = p.getPointAtLength(Math.min(l, d + .8));
+    return { x: c.x, y: c.y, a: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI };
+  };
+  const mk = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+  const arcTo = (a, b, k, h = 50) => ({ x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) - h * Math.sin(Math.PI * k) });
+
+  // A pool of particles that loop on the clock while `live`, anchored to (x, y)
+  const particles = (g, n, cls, spread) => {
+    const pool = [...Array(n)].map((_, i) => ({
+      c: mk("circle", { class: cls, r: (spread.r[0] + Math.random() * spread.r[1]).toFixed(1) }, g),
+      vx: (Math.random() - .5) * spread.vx, vy: spread.vy[0] + Math.random() * spread.vy[1], ph: i / n,
+    }));
+    return (x, y, live, t) => pool.forEach((s) => {
+      if (!live || reduce) return op(s.c, 0);
+      const u = (t / spread.dur + s.ph) % 1;
+      s.c.setAttribute("cx", (x + s.vx * u).toFixed(1));
+      s.c.setAttribute("cy", (y + s.vy * u + spread.g * u * u).toFixed(1));
+      op(s.c, (1 - u) * spread.o);
+    });
+  };
+
+  // Walks a list of paths in order with pen-up moves between them; k in [0,1] over the whole job
+  const plotter = (items, g, travel = .3) => {
+    const segs = []; let tot = 0, prev = null;
+    items.forEach((p) => {
+      prep(p);
+      const l = len(p), s = p.getPointAtLength(0);
+      if (prev) { const d = Math.hypot(s.x - prev.x, s.y - prev.y) * travel; segs.push({ a: prev, b: s, d }); tot += d; }
+      p._pops = (p.dataset.pop || "").split(" ").filter(Boolean).map((x) => { const [sel, at] = x.split("@"); return [$$(sel, g), +at]; });
+      segs.push({ p, d: l }); tot += l;
+      prev = p.getPointAtLength(l);
+    });
+    const first = items[0].getPointAtLength(0);
+    return (k) => {
+      let u = k * tot, pos = null, drawing = false;
+      for (const s of segs) {
+        const f = clamp(u / s.d);
+        if (s.p) {
+          draw(s.p, f); s.p._f = f;
+          s.p.classList.toggle("done", f >= 1);
+          s.p._pops.forEach(([els, at]) => els.forEach((e) => on(e, k > 0 && f >= at && (at > 0 || f > 0))));
+          if (u >= 0 && u <= s.d) { pos = s.p.getPointAtLength(f * s.d); drawing = f > 0 && f < 1; }
+        } else if (u >= 0 && u <= s.d) pos = { x: lerp(s.a.x, s.b.x, f), y: lerp(s.a.y, s.b.y, f) };
+        u -= s.d;
+      }
+      return { pos: pos || (k <= 0 ? first : prev), drawing };
+    };
+  };
+
+  const panelFront = () => `
+    <rect class="coatfill" width="300" height="490" rx="4"/>
+    <path class="ln" d="M16 180H284M16 330H284"/>
+    ${[[70, "V"], [150, "A"], [230, "kW"]].map(([x, u]) => `<g transform="translate(${x} 78)"><circle class="solid" r="30"/><path class="lt" d="M-20-8A22 22 0 0 1 20-8"/><g class="needle" transform="rotate(-60)"><path class="hot" d="M0 4V-22"/></g><circle class="fk" r="3"/><text class="t xs" y="20" text-anchor="middle" style="fill:var(--ink)">${u}</text></g>`).join("")}
+    ${[["--r", 110], ["--y", 150], ["--b", 190]].map(([c, x]) => `<circle class="lamp" style="--c:var(${c})" cx="${x}" cy="146" r="9"/>`).join("")}
+    <text class="t sm" x="20" y="208">415 V · 50 Hz · 1600 A</text>
+    <rect class="fk" x="274" y="210" width="10" height="70" rx="4"/>
+    <path class="ln" d="M190 420H270M190 434H270M190 448H270M190 462H270"/>
+    <rect class="solid" x="20" y="428" width="90" height="30" rx="3"/><text class="t sm k m" x="65" y="448" text-anchor="middle">PCC-1</text>`;
+
+  const builders = {
+    review(g) {
+      const data = [["Chiller plant", 160], ["AHUs, 4 nos.", 88], ["Lighting and sockets", 42], ["Fire and domestic pumps", 75], ["Lifts", 30]];
+      $(".rows", g).innerHTML = data.map(([n, kw], i) => {
+        const y = 210 + 50 * i;
+        return `<text class="t rowt" x="140" y="${y}">${n}</text><text class="t m rowt" x="356" y="${y}" text-anchor="end">${kw} kW</text><path class="lt" d="M140 ${y + 14}H356"/><path class="hot tick pop" d="M372 ${y - 6}l6 6 12-12"/>`;
+      }).join("");
+      const rowT = $$(".rowt", g), ticks = $$(".tick", g), tot = $(".tot", g);
+      // Snake route across the rows; remember where each row starts and ends along it
+      const route = mk("path", { class: "guide" }, g), marks = [];
+      let d = "M140 204";
+      const lenOf = (s) => { route.setAttribute("d", s); return route.getTotalLength(); };
+      data.forEach((_, i) => {
+        const y = 204 + 50 * i, x = i % 2 ? 146 : 372, a = lenOf(d);
+        d += `H${x}`; marks.push([a, lenOf(d)]);
+        if (i < data.length - 1) { const cx = i % 2 ? 122 : 396; d += `C${cx} ${y} ${cx} ${y + 50} ${x} ${y + 50}`; }
+      });
+      route.setAttribute("d", d); route._L = undefined;
+      const mag = $(".mag", g), pin = $(".pin", g), ring = $(".ring", g), ltRoom = $(".lt-room", g);
+      const run = $(".run", g), runLabel = $(".run-label", g), compass = $(".compass", g), blds = $$(".bld", g), roads = $(".roadline", g);
+      const walkP = $(".walk-route", g), walker = $(".walker", g);
+      const dots = []; for (let s = 0; s < len(walkP); s += 14) { const q = walkP.getPointAtLength(s); dots.push(mk("circle", { class: "dot pop", cx: q.x.toFixed(1), cy: q.y.toFixed(1), r: 2.6 }, $(".walk", g))); }
+      prep(run); prep(roads);
+      return (p) => {
+        const k = E.io(seg(p, .03, .46)), r = pt(route, k);
+        T(mag, r.x, r.y); op(mag, seg(p, 0, .03) * (1 - seg(p, .46, .52)));
+        const s = k * len(route); let sum = 0;
+        marks.forEach(([a, b], i) => {
+          const f = clamp((s - a) / (b - a)); sum += data[i][1] * f;
+          rowT[2 * i].classList.toggle("ok", f >= 1); rowT[2 * i + 1].classList.toggle("ok", f >= 1); on(ticks[i], f >= 1);
+        });
+        tot.textContent = `${Math.round(sum)} kW`;
+        draw(roads, seg(p, .44, .56));
+        blds.forEach((b, i) => op(b, .35 + .65 * seg(p, .46 + i * .03, .52 + i * .03)));
+        const ck = seg(p, .5, .62); T(compass, 884, 500, lerp(-120, 0, E.back(ck))); op(compass, .35 + .65 * ck);
+        const w = seg(p, .55, .72);
+        dots.forEach((c, i) => on(c, i / dots.length < w));
+        const wp = pt(walkP, w); walker.setAttribute("cx", wp.x); walker.setAttribute("cy", wp.y); op(walker, w > 0 && w < 1 ? 1 : 0);
+        const pk = seg(p, .7, .8); op(pin, pk > 0 ? 1 : 0); T(pin, 776, 330 - 150 * (1 - E.bounce(pk)));
+        const rk = seg(p, .78, .92); ring.setAttribute("r", (8 + 48 * rk).toFixed(1)); op(ring, rk > 0 && rk < 1 ? 1 - rk : 0);
+        on(ltRoom, p >= .78);
+        draw(run, seg(p, .82, .95)); op(runLabel, seg(p, .9, .96));
+      };
+    },
+
+    engineering(g) {
+      const unroll = $(".unroll", g), pen = $(".pen", g), stamp = $(".stamp", g), splash = $(".splash", g), tb = $$(".tb", g);
+      const plot = plotter($$(".plot", g), g, .3);
+      return (p) => {
+        unroll.setAttribute("height", (530 * E.out(seg(p, 0, .08))).toFixed(1));
+        const st = plot(seg(p, .08, .8));
+        T(pen, st.pos.x + (st.drawing ? 0 : 5), st.pos.y - (st.drawing ? 0 : 8));
+        op(pen, seg(p, .06, .09) * (1 - seg(p, .8, .84)));
+        tb.forEach((t, i) => op(t, seg(p, .78 + i * .02, .8 + i * .02)));
+        const sk = seg(p, .84, .93);
+        op(stamp, sk > 0 ? 1 : 0);
+        T(stamp, 590, 470, lerp(-40, -12, E.out(sk)), lerp(2.2, 1, E.back(sk)));
+        const sp = seg(p, .91, .99);
+        splash.setAttribute("r", (46 + 40 * sp).toFixed(1)); op(splash, sp > 0 && sp < 1 ? (1 - sp) * .8 : 0);
+      };
+    },
+
+    fabrication(g) {
+      const slats = $(".slats", g);
+      for (let x = 176; x <= 626; x += 25) mk("path", { class: "slat", d: `M${x} 66V544` }, slats);
+      const cuts = $$(".cut", g), outline = $(".outline", g), holes = $(".holes", g);
+      const holeEls = cuts.filter((c) => c !== outline).map((c) => mk("path", { class: "hole", d: c.getAttribute("d") }, holes));
+      $(".coat", g).setAttribute("d", "M221 131H579V479H221Z" + cuts.filter((c) => c !== outline).map((c) => c.getAttribute("d")).join(""));
+      const cut = plotter(cuts, g, .25);
+      const gantry = $(".gantry", g), head = $(".head", g), beam = $(".beam", g), raw = $(".raw", g), bendline = $(".bendline", g);
+      const sparks = particles($(".sparks", g), 22, "spk", { r: [1.4, 1.8], vx: 130, vy: [-30, -60], g: 150, dur: 520, o: 1 });
+      const fl = $$(".fl", g), fls = $$(".fl-s", g), profile = $(".profile", g), punch = $(".punch", g), angleT = $(".bend-angle", g);
+      const torch = $(".torch", g), tflash = $(".tflash", g), wsparks = particles($(".wsparks", g), 14, "spk", { r: [1.2, 1.4], vx: 80, vy: [-20, -40], g: 110, dur: 420, o: 1 });
+      const C = [[228, 138], [572, 138], [572, 472], [228, 472]];
+      const beads = C.map(([x, y]) => mk("circle", { class: "bead", cx: x, cy: y, r: 0 }, $(".beads", g)));
+      const brush = $(".brush", g), gunRoute = $(".gun-route", g), gun = $(".gun", g);
+      const mist = particles($(".mistg", g), 18, "mist", { r: [2, 3], vx: 110, vy: [-45, 90], g: 0, dur: 380, o: .9 });
+      const temp = $(".temp", g), timer = $(".timer", g), heat = $$(".heat", g), glow = $(".oven-glow", g), swatch = $(".swatch", g);
+      prep(brush);
+      const end = outline.getPointAtLength(0);
+      const poly = (el, pts) => el.setAttribute("points", pts.map((q) => q.map((v) => v.toFixed(1)).join(",")).join(" "));
+      return (p, t) => {
+        // Laser cut
+        const st = cut(seg(p, .03, .4));
+        const park = seg(p, .4, .46);
+        const hx = p < .4 ? st.pos.x : lerp(end.x, 640, E.io(park)), hy = p < .4 ? st.pos.y : end.y;
+        T(gantry, hx, 0); T(head, hx, hy);
+        op(gantry, 1 - seg(p, .44, .48)); op(head, 1 - seg(p, .44, .48));
+        op(beam, st.drawing ? 1 : 0);
+        sparks(hx, hy, st.drawing, t);
+        holeEls.forEach((h, i) => on(h, cuts[i]._f >= 1));
+        op(raw, 1 - seg(p, .4, .45));
+        // Bend: flanges fold up to 90°, seen from above they shrink to a lip
+        const bRaw = seg(p, .44, .58), bk = E.io(bRaw), a = bk * Math.PI / 2, h = 7 + 21 * Math.cos(a);
+        const sets = [
+          [[228, 138], [572, 138], [572, 138 - h], [228, 138 - h]],
+          [[572, 138], [572 + h, 138], [572 + h, 472], [572, 472]],
+          [[228, 472], [572, 472], [572, 472 + h], [228, 472 + h]],
+          [[228 - h, 138], [228, 138], [228, 472], [228 - h, 472]],
+        ];
+        sets.forEach((s, i) => { poly(fl[i], s); poly(fls[i], s); op(fls[i], .22 * bk); });
+        op(outline, 1 - seg(p, .44, .48)); op(bendline, 1 - seg(p, .5, .56));
+        const L = 46, ca = Math.cos(a), sa = Math.sin(a);
+        profile.setAttribute("points", `${(785 - L * ca).toFixed(1)},${(232 - L * sa).toFixed(1)} 785,232 835,232 ${(835 + L * ca).toFixed(1)},${(232 - L * sa).toFixed(1)}`);
+        T(punch, 0, -44 * (1 - E.io(seg(bRaw, 0, .2))) - 44 * E.io(seg(bRaw, .85, 1)));
+        angleT.textContent = `${Math.round(90 * bk)}°`;
+        // Weld: torch dwells on each corner, then moves on
+        const wk = seg(p, .58, .68), wi = Math.min(3, Math.floor(wk * 4)), wf = wk * 4 - wi;
+        let tp, dwell = false;
+        if (wf < .6 || wi === 3) { tp = C[wi]; dwell = wk > 0 && wk < 1 && wf < .6; }
+        else { const f = E.io((wf - .6) / .4); tp = [lerp(C[wi][0], C[wi + 1][0], f), lerp(C[wi][1], C[wi + 1][1], f)]; }
+        T(torch, tp[0], tp[1]); op(torch, wk > 0 && wk < 1 ? 1 : 0);
+        op(tflash, dwell ? .6 + .4 * Math.sin(t / 40) : 0);
+        wsparks(tp[0], tp[1], dwell, t);
+        beads.forEach((b, i) => b.setAttribute("r", (7 * clamp((wk * 4 - i) / .6)).toFixed(1)));
+        // Powder coat along a raster path; the mask stroke follows the gun
+        const gk = seg(p, .68, .84), gp = pt(gunRoute, gk);
+        draw(brush, gk); T(gun, gp.x, gp.y);
+        op(gun, seg(p, .67, .69) * (1 - seg(p, .84, .86)));
+        mist(gp.x, gp.y, gk > 0 && gk < 1, t);
+        on(swatch, gk >= 1);
+        // Cure
+        const ok = seg(p, .84, .98);
+        temp.textContent = `${Math.round(20 + 160 * E.io(seg(ok, 0, .45)))} °C`;
+        const rem = Math.round(600 * (1 - seg(ok, .45, 1)));
+        timer.textContent = `${Math.floor(rem / 60)}:${String(rem % 60).padStart(2, "0")}`;
+        op(glow, .28 * seg(ok, 0, .3) * (1 - seg(ok, .95, 1)));
+        heat.forEach((w, i) => { T(w, 0, reduce ? 0 : -((t / 40 + i * 9) % 18)); op(w, ok > 0 && ok < 1 ? .9 : 0); });
+      };
+    },
+
+    assembly(g) {
+      const bars = $(".bars", g), barEls = [["--r", 90], ["--y", 108], ["--b", 126], ["--graphite", 144]].map(([c, y]) =>
+        mk("rect", { class: "bar", x: 430, y, width: 240, height: 9, rx: 2, style: `fill:var(${c})` }, bars));
+      const mcbG = $(".mcbs", g), mcbs = [...Array(8)].map((_, i) => {
+        const b = mk("g", {}, mcbG), x = 432 + 29.5 * i;
+        mk("rect", { class: "solid", x, y: 400, width: 24, height: 42, rx: 2 }, b);
+        mk("rect", { class: "fk", x: x + 8, y: 410, width: 8, height: 12, rx: 1.5 }, b);
+        return b;
+      });
+      const wires = $(".wires", g), wireEls = [], ferr = [], cls = ["w-r", "w-k", "w-g", "w-k"];
+      [457, 521, 585, 649].forEach((xm, i) => {
+        const xt = 448 + 24 * i, yv = 470 - 10 * i;
+        wireEls.push(mk("path", { class: `wire ${cls[i]}`, d: `M${xt} 488V${yv}H${xm}V382` }, wires));
+      });
+      [0, 1, 2, 3].forEach((j) => {
+        const xt = 556 + 24 * j, xm = 432 + 29.5 * (j + 4) + 12;
+        wireEls.push(mk("path", { class: `wire ${cls[(j + 1) % 4]}`, d: `M${xt} 488V${472 - 5 * j}H${xm}V444` }, wires));
+      });
+      wireEls.forEach((w, i) => {
+        prep(w);
+        const e = w.getPointAtLength(len(w)), f = mk("g", { class: "pop" }, wires);
+        mk("rect", { class: "ferrule", x: e.x - 9, y: e.y + 3, width: 18, height: 10, rx: 2 }, f);
+        const tx = mk("text", { class: "t xs m", x: e.x, y: e.y + 11, "text-anchor": "middle", style: "fill:var(--ink);font-size:7.5px" }, f);
+        tx.textContent = `F${i + 1}`;
+        ferr.push(f);
+      });
+      const ins = $(".ins", g), mods = $$(".mod", g).map((m) => {
+        const [sx, sy] = m.dataset.s.split(" ").map(Number), [tx, ty] = m.dataset.t.split(" ").map(Number);
+        const guide = mk("path", { class: "guide", d: `M${sx} ${sy}C${sx + 20} ${sy - 300} ${tx - 30} ${ty - 200} ${tx} ${ty}` }, g);
+        return { m, guide, dir: 1 };
+      });
+      const door = $(".door", g), front = $(".door-front", g), back = $(".door-back", g), modsG = $(".mods", g);
+      front.innerHTML = panelFront();
+      const win = [[.22, .38], ...[0, 1, 2, 3].map((i) => [.34 + i * .05, .46 + i * .05])];
+      return (p) => {
+        barEls.forEach((b, i) => {
+          const s = .04 + i * .045, k = E.out(seg(p, s, s + .12));
+          T(b, 420 * (1 - k), -36 * (1 - k)); op(b, seg(p, s, s + .02));
+        });
+        on(ins, p >= .26);
+        mods.forEach(({ m, guide }, i) => {
+          const k = E.io(seg(p, win[i][0], win[i][1])), q = pt(guide, k);
+          T(m, q.x, q.y, 10 * Math.sin(Math.PI * k), 1 + .06 * Math.sin(Math.PI * k));
+        });
+        mcbs.forEach((b, j) => { const k = seg(p, .52 + j * .014, .56 + j * .014); T(b, 0, -30 * (1 - E.back(k))); op(b, k); });
+        wireEls.forEach((w, i) => { const f = seg(p, .62 + i * .022, .7 + i * .022); draw(w, f); on(ferr[i], f >= 1); });
+        const dk = E.io(seg(p, .84, .97)), th = lerp(100, 0, dk) * Math.PI / 180, a = Math.cos(th), b = -.08 * Math.sin(th);
+        door.setAttribute("transform", `matrix(${a.toFixed(4)} ${b.toFixed(4)} 0 1 400 50)`);
+        op(front, a > 0 ? 1 : 0); op(back, a > 0 ? 0 : 1);
+        // The open door sits behind the flying parts; once it is facing us it closes over them
+        if (a > 0 && door.nextSibling) g.appendChild(door);
+        if (a <= 0 && door.nextSibling !== modsG) g.insertBefore(door, modsG);
+      };
+    },
+
+    testing(g) {
+      const panel = $(".panel-front", g); panel.innerHTML = panelFront();
+      const needles = $$(".needle", panel), lamps = $$(".lamp", panel), targets = [22, 6, 30];
+      const probe = $(".probe", g), lead = $(".lead", g), pulses = $$(".pulse", g), read = $(".ir-read", g), knob = $(".knob", g);
+      const kvArc = $(".kv-arc", g), kvNeedle = $(".kv-needle", g), kvRead = $(".kv-read", g), hold = $(".hold", g), holdT = $(".hold-t", g), tag = $(".qctag", g);
+      const ticksG = $(".dial-ticks", g);
+      for (let v = 0; v <= 5; v += .5) {
+        const an = Math.PI * (1 - v / 5), major = v % 1 === 0, r0 = major ? 82 : 88;
+        mk("path", { class: major ? "lk" : "ln", style: "stroke-width:2", d: `M${(780 + r0 * Math.cos(an)).toFixed(1)} ${(210 - r0 * Math.sin(an)).toFixed(1)}L${(780 + 96 * Math.cos(an)).toFixed(1)} ${(210 - 96 * Math.sin(an)).toFixed(1)}` }, ticksG);
+        if (major) { const tx = mk("text", { class: "t xs m", x: (780 + 66 * Math.cos(an)).toFixed(1), y: (214 - 66 * Math.sin(an)).toFixed(1), "text-anchor": "middle" }, ticksG); tx.textContent = v; }
+      }
+      const checks = $(".checks", g), rows = ["IR > 500 MΩ", "HV 2.5 kV, 60 s", "Functional run", "QC passed"].map((s, i) => {
+        const y = 384 + 40 * i, row = mk("g", {}, checks);
+        mk("rect", { class: "tick-box", x: 780, y: y - 14, width: 18, height: 18, rx: 4 }, row);
+        const tk = mk("path", { class: "hot pop", d: `M783.5 ${y - 5}l4 4 8-8` }, row);
+        const tx = mk("text", { class: "t sm rowt", x: 808, y }, row); tx.textContent = s;
+        return { tk, tx };
+      });
+      prep(kvArc); prep(hold);
+      const rest = { x: 560, y: 566 }, term = [180, 270, 360].map((x) => ({ x: x + 7, y: 570 })), ph = ["R", "Y", "B"], vals = [548, 562, 531];
+      return (p, t) => {
+        let pos = rest, txt = "----", live = false;
+        term.forEach((tp, i) => {
+          const a = .04 + .12 * i;
+          if (p < a) return;
+          const f = seg(p, a, a + .12);
+          pos = arcTo(i ? term[i - 1] : rest, tp, E.io(seg(f, 0, .35)), i ? 40 : 70);
+          if (f > .35) { live = f < 1; txt = `${ph[i]}–E ${Math.round(vals[i] * E.out(seg(f, .35, .9)))} MΩ`; }
+        });
+        if (p >= .4) { pos = arcTo(term[2], rest, E.io(seg(p, .4, .44)), 70); txt = "IR  OK"; }
+        if (p >= .44) txt = "HV TEST";
+        if (p >= .68) txt = "FN RUN";
+        if (p >= .86) txt = "PASS";
+        read.textContent = txt;
+        T(probe, pos.x, pos.y);
+        const bx = pos.x + 46, by = pos.y;
+        lead.setAttribute("d", `M704 482C704 572 ${(bx + 40).toFixed(1)} ${(by + 36).toFixed(1)} ${bx.toFixed(1)} ${by.toFixed(1)}`);
+        const ll = lead.getTotalLength();
+        pulses.forEach((c, j) => {
+          if (!live || reduce) return op(c, 0);
+          const u = (t / 700 + j / 3) % 1, q = lead.getPointAtLength(ll * u);
+          c.setAttribute("cx", q.x); c.setAttribute("cy", q.y); op(c, Math.min(1, u / .1, (1 - u) / .1));
+        });
+        T(knob, 580, 482, p < .42 ? -40 : p < .66 ? 0 : 40);
+        // HV withstand: ramp, hold 60 s, ramp down
+        const up = seg(p, .42, .5), hk = seg(p, .5, .64), dn = seg(p, .64, .68), kv = 2.5 * E.io(up) * (1 - E.io(dn));
+        draw(kvArc, kv / 5); T(kvNeedle, 780, 210, -90 + kv / 5 * 180);
+        kvRead.textContent = `${kv.toFixed(2)} kV`;
+        draw(hold, hk); holdT.textContent = hk >= 1 ? "OK" : `${Math.ceil(60 * (1 - hk))} s`;
+        // Functional run
+        const fk = seg(p, .68, .84);
+        lamps.forEach((l, i) => on(l, fk >= .1 + i * .15));
+        needles.forEach((n, i) => n.setAttribute("transform", `rotate(${lerp(-60, targets[i], E.back(seg(fk, .3 + i * .15, .6 + i * .15))).toFixed(2)})`));
+        [.4, .68, .84, .97].forEach((th, i) => { on(rows[i].tk, p >= th); rows[i].tx.classList.toggle("ok", p >= th); });
+        // QC tag swings on and settles
+        const qk = seg(p, .86, 1);
+        op(tag, qk > 0 ? 1 : 0);
+        T(tag, 399, 305 - 30 * (1 - E.out(seg(qk, 0, .2))), 40 * Math.exp(-4 * qk) * Math.cos(qk * 16));
+      };
+    },
+
+    commissioning(g) {
+      const road = $(".road-path", g), truck = $(".truck", g), spokes = $$(".spoke", g), cpanel = $(".cpanel", g), unload = $(".unload", g);
+      const trolley = $(".trolley", g), hook = $(".hook", g), cable = $(".cable", g), cps = $$(".cp", g), lamps = $$(".lamp", cpanel);
+      const report = $(".report", g), sig = $(".sig", g), hand = $(".hand", g);
+      const winG = $(".wins", g), wins = [];
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 3; c++) wins.push(mk("rect", { class: "win", x: 896 + c * 30, y: 158 + r * 42, width: 18, height: 24, rx: 2 }, winG));
+      const order = wins.map((_, i) => (i * 7 + 3) % wins.length);
+      prep(cable); prep(sig);
+      return (p, t) => {
+        const dk = E.io(seg(p, .02, .36)), tp = pt(road, dk);
+        T(truck, tp.x, tp.y, tp.a);
+        const spin = dk * len(road) / 8 * 180 / Math.PI;
+        spokes.forEach((s) => s.setAttribute("transform", `rotate(${spin.toFixed(1)})`));
+        let px, py;
+        if (p < .38) {
+          const a = tp.a * Math.PI / 180;
+          px = tp.x + Math.cos(a) * -19 - Math.sin(a) * -16; py = tp.y + Math.sin(a) * -19 + Math.cos(a) * -16;
+          T(cpanel, px, py, tp.a);
+        } else {
+          const q = pt(unload, E.io(seg(p, .38, .56))); px = q.x; py = q.y; T(cpanel, px, py);
+        }
+        // Hoist: trolley rides the beam above the panel; the hook comes down before the lift and goes back up after
+        const tx = p < .38 ? 621 : clamp(px, 606, 816);
+        const hy = p < .38 ? lerp(372, 473, seg(p, .32, .38)) : p < .56 ? py - 56 : lerp(492, 372, seg(p, .56, .62));
+        T(trolley, tx, 0);
+        hook.setAttribute("d", `M${tx} 356V${hy.toFixed(1)}M${tx - 6} ${hy.toFixed(1)}H${tx + 6}`);
+        draw(cable, seg(p, .56, .68));
+        lamps.forEach((l, i) => on(l, p >= .69 + i * .025));
+        const cl = len(cable);
+        cps.forEach((c, j) => {
+          if (p < .76 || reduce) return op(c, 0);
+          const u = (t / 900 + j / 3) % 1, q = cable.getPointAtLength(cl * u);
+          c.setAttribute("cx", q.x); c.setAttribute("cy", q.y); op(c, Math.min(1, u / .08, (1 - u) / .08));
+        });
+        const n = Math.floor(seg(p, .78, .94) * wins.length + .001);
+        wins.forEach((w, i) => on(w, order[i] < n));
+        const rk = E.out(seg(p, .84, .94));
+        T(report, 300, 70 + 220 * (1 - rk), -2 - 6 * (1 - rk)); op(report, seg(p, .84, .88));
+        draw(sig, seg(p, .9, .97)); on(hand, p >= .97);
+      };
+    },
+  };
+
+  const STEPS = [
+    { t: "Review", d: "You share your requirements, load list and site conditions with us. If needed, we visit your site.", subs: [["Check the load list", .46], ["Walk the site", .72], ["Fix the panel location", .95]] },
+    { t: "Engineering", d: "GA drawings, wiring diagrams and a bill of materials, sent to you for approval.", subs: [["Single-line diagram", .52], ["GA drawing", .8], ["Your approval", .94]] },
+    { t: "Fabrication", d: "CRCA sheet steel is cut, bent, welded and powder-coated in-house.", subs: [["Laser cut", .4], ["Bend", .58], ["Weld", .68], ["Powder coat and cure", .97]] },
+    { t: "Assembly", d: "Busbars, switchgear and control wiring are fitted and ferruled to the approved drawings.", subs: [["Busbars", .26], ["Switchgear", .64], ["Control wiring", .82], ["Door fit", .97]] },
+    { t: "Testing", d: "High-voltage, insulation resistance and functional tests, with your team welcome to witness.", subs: [["Insulation resistance", .4], ["HV withstand", .68], ["Functional run", .84], ["QC tag", .97]] },
+    { t: "Commissioning", d: "Dispatch, installation support and on-site commissioning with a full test report.", subs: [["Dispatch", .36], ["Install on plinth", .56], ["Terminate cables", .68], ["Energise and hand over", .97]] },
+  ];
+
+  // ---------- World layout: scenes, the motion path that links them, and its stations ----------
+  const ORIG = [[0, 0], [1100, 240], [2200, 0], [3300, 240], [4400, 0], [5500, 240]];
+  const FY = 612, LW = .32;
+  const scenes = $$(".scene").map((g, i) => {
+    const [ox, oy] = ORIG[i];
+    g.setAttribute("transform", `translate(${ox} ${oy})`);
+    return { g, render: builders[g.dataset.scene](g), last: -1, cx: ox + 500, cy: oy + 320 };
+  });
+  const railG = $("#rail"), stG = $("#stations"), seq = [];
+  ORIG.forEach(([ox, oy], i) => {
+    const addPiece = (d, kind, w) => {
+      mk("path", { class: "rail-base", d }, railG);
+      const live = mk("path", { class: "rail-live", d }, railG); prep(live);
+      seq.push({ kind, i, w, live });
+    };
+    addPiece(`M${ox + 40} ${oy + FY}H${ox + 960}`, "s", 1);
+    if (i < ORIG.length - 1) {
+      const [nx, ny] = ORIG[i + 1];
+      addPiece(`M${ox + 960} ${oy + FY}C${ox + 1060} ${oy + FY} ${nx - 60} ${ny + FY} ${nx + 40} ${ny + FY}`, "l", LW);
+    }
+  });
+  const stations = ORIG.map(([ox, oy], i) => {
+    const s = mk("g", { class: "station", transform: `translate(${ox + 40} ${oy + FY})` }, stG);
+    mk("circle", { r: 20 }, s);
+    mk("text", { y: 5 }, s).textContent = String(i + 1).padStart(2, "0");
+    return s;
+  });
+  const total = seq.reduce((a, s) => a + s.w, 0);
+  const starts = []; { let acc = 0; seq.forEach((s) => { if (s.kind === "s") starts[s.i] = acc; acc += s.w; }); }
+
+  // ---------- Overlay UI ----------
+  const track = $("#track"), stage = $("#stage"), world = $("#world"), token = $("#token"), card = $("#card");
+  const cNum = $("#cNum"), cTitle = $("#cTitle"), cDesc = $("#cDesc"), cSubs = $("#cSubs"), cMeter = $("#cMeter"), pct = $("#pct");
+  const railList = $("#railList"), railFill = $("#railFill"), railNav = $("#railNav");
+  const railBtns = STEPS.map((s, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<button type="button"><b>${String(i + 1).padStart(2, "0")}</b><span>${s.t}</span></button>`;
+    railList.appendChild(li);
+    const b = li.firstChild;
+    b.addEventListener("click", () => {
+      const r = track.getBoundingClientRect(), span = r.height - innerHeight;
+      scrollTo({ top: scrollY + r.top + ((starts[i] + .02) / total) * span, behavior: reduce ? "auto" : "smooth" });
+    });
+    return b;
+  });
+
+  let shown = -1, subEls = [];
+  const showStep = (i) => {
+    if (i === shown) return;
+    const first = shown < 0; shown = i;
+    const fill = () => {
+      const s = STEPS[i];
+      cNum.textContent = String(i + 1).padStart(2, "0"); cTitle.textContent = s.t; cDesc.textContent = s.d;
+      cSubs.innerHTML = s.subs.map(([n]) => `<li>${n}</li>`).join("");
+      subEls = [...cSubs.children];
+      card.classList.remove("is-swapping");
+    };
+    if (first || reduce) return fill();
+    card.classList.add("is-swapping");
+    clearTimeout(showStep._t); showStep._t = setTimeout(fill, 200);
+  };
+
+  // ---------- Frame ----------
+  let target = 0, cur = 0;
+  const readScroll = () => {
+    const r = track.getBoundingClientRect(), span = r.height - innerHeight;
+    target = clamp(-r.top / span);
+    return r.bottom > 0 && r.top < innerHeight;
+  };
+
+  const render = (P, t) => {
+    let u = P * total, idx = 0;
+    while (idx < seq.length - 1 && u > seq[idx].w) { u -= seq[idx].w; idx++; }
+    const s = seq[idx], loc = clamp(u / s.w);
+    seq.forEach((q, j) => draw(q.live, j < idx ? 1 : j > idx ? 0 : loc));
+
+    scenes.forEach((sc, j) => {
+      const p = s.kind === "s" ? (j < s.i ? 1 : j > s.i ? 0 : loc) : (j <= s.i ? 1 : 0);
+      const active = j === s.i || (s.kind === "l" && j === s.i + 1);
+      if (p !== sc.last || active) { sc.render(p, t); sc.last = p; }
+      sc.p = p;
+      const o = s.kind === "s" ? (j === s.i ? 1 : .26) : j === s.i ? lerp(1, .26, loc) : j === s.i + 1 ? lerp(.26, 1, loc) : .26;
+      op(sc.g, o);
+    });
+
+    const tp = pt(s.live, loc); T(token, tp.x, tp.y);
+
+    // Camera: holds on a scene while it plays, eases along the link to the next one with a slight pull-back
+    let cx, cy, z = 1;
+    const A = scenes[s.i];
+    if (s.kind === "s") { cx = A.cx + (loc - .5) * 40; cy = A.cy; }
+    else {
+      const B = scenes[s.i + 1], k = E.io(loc);
+      cx = lerp(A.cx + 20, B.cx - 20, k); cy = lerp(A.cy, B.cy, k); z = 1 - .14 * Math.sin(Math.PI * loc);
+    }
+    const W = stage.clientWidth, H = stage.clientHeight, narrow = W <= 900;
+    const cr = card.getBoundingClientRect(), rr = railNav.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    let ax, ay, aw, ah;
+    if (narrow) { ax = 8; aw = W - 16; ay = rr.bottom - sr.top + 6; ah = cr.top - sr.top - ay - 6; }
+    else { ax = cr.right - sr.left + 12; aw = W - ax - 16; ay = 56; ah = rr.top - sr.top - ay - 4; }
+    const scale = Math.min(aw / 1000, ah / 660) * z;
+    const vx = cx - (ax + aw / 2) / scale, vy = cy - (ay + ah / 2) / scale;
+    world.setAttribute("viewBox", `${vx.toFixed(1)} ${vy.toFixed(1)} ${(W / scale).toFixed(1)} ${(H / scale).toFixed(1)}`);
+
+    // Card, rail and stations
+    const step = s.kind === "s" ? s.i : loc < .5 ? s.i : s.i + 1;
+    showStep(step);
+    const sp = scenes[step].p;
+    cMeter.style.width = `${(sp * 100).toFixed(1)}%`;
+    if (shown === step) subEls.forEach((li, i) => {
+      const th = STEPS[step].subs[i][1], prev = i ? STEPS[step].subs[i - 1][1] : 0;
+      li.classList.toggle("done", sp >= th);
+      li.classList.toggle("now", sp < th && sp >= prev && sp > 0);
+    });
+    const rv = s.kind === "s" ? s.i + .85 * loc : s.i + .85 + .15 * loc;
+    railFill.style.width = `${(clamp(rv / 5) * 100).toFixed(2)}%`;
+    railBtns.forEach((b, j) => { b.classList.toggle("reached", j < step || (j === step && sp >= 1)); b.classList.toggle("now", j === step && sp < 1); });
+    stations.forEach((st, j) => { st.classList.toggle("reached", j < step || (j === step && sp >= 1)); st.classList.toggle("now", j === step && sp < 1); });
+    pct.textContent = `${Math.round(P * 100)}%`;
+  };
+
+  const loop = (t) => {
+    const visible = readScroll();
+    cur = reduce ? target : cur + (target - cur) * .14;
+    if (Math.abs(target - cur) < 1e-4) cur = target;
+    if (visible) render(cur, reduce ? 0 : t);
+    requestAnimationFrame(loop);
+  };
+  readScroll(); cur = target;
+  render(cur, 0);
+  requestAnimationFrame(loop);
+})();
+</script>
