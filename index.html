@@ -275,12 +275,12 @@
   .vg .lamp { fill: var(--steel); transition: fill .3s, filter .3s; }
   .vg .lamp.on { fill: var(--c, var(--arc)); filter: drop-shadow(0 0 2px var(--c, var(--arc))); }
   .vg .coat { fill: #D5D7D2; }
-  .vg .loop { transition: stroke .4s; }
-  .vg .loop.live { stroke: color-mix(in srgb, var(--arc) 45%, var(--steel)); }
+  .vg .lead { fill: none; stroke: var(--graphite); stroke-width: 1.2; stroke-linecap: round; transition: stroke .3s; }
+  .vg .lead.live { stroke: color-mix(in srgb, var(--arc) 60%, var(--graphite)); }
   .vg .pulse, .vg .spk { fill: var(--arc); }
   .vg .pulse { filter: drop-shadow(0 0 2px var(--arc)); }
-  .vg .needle { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
-  .vg .pivot { fill: var(--ink); }
+  .vg .screen { fill: var(--ink); }
+  .vg .readout { font: 700 6.4px ui-monospace, "SF Mono", Menlo, monospace; fill: var(--arc); text-anchor: middle; }
   .vg .label { font: 600 6px "Archivo", system-ui, sans-serif; fill: var(--graphite); text-anchor: middle; }
   .vg .road { fill: none; stroke: var(--steel); stroke-width: 8; stroke-linecap: round; }
   .vg .lane { fill: none; stroke: var(--ground); stroke-width: 1; stroke-dasharray: 3 4; }
@@ -512,24 +512,19 @@
         <h3>Engineering</h3><p>GA drawings, wiring diagrams and a bill of materials, sent to you for approval.</p>
       </li>
       <li>
-        <!-- A laser head cuts the door blank and its meter, lamp and breaker cut-outs, a spray gun sweeps on the RAL 7035 powder coat, then the hinges, handle and louvres go on -->
+        <!-- A laser head cuts the same cabinet the Assembly step fills, outline first then its three module openings; a spray gun sweeps on the RAL 7035 powder coat and the handle goes on -->
         <svg class="vg" data-step="fabrication" viewBox="0 0 160 100" aria-hidden="true">
-          <defs><clipPath id="vgCoat"><rect class="coat-clip" x="40" y="14" width="60" height="80"/></clipPath></defs>
-          <path class="lt" d="M30 12H110V96H30Z"/>
+          <defs><clipPath id="vgCoat"><rect class="coat-clip" x="72" y="6" width="68" height="88"/></clipPath></defs>
+          <path class="ln" d="M68 94H144"/>
           <path class="coat door" clip-path="url(#vgCoat)" fill-rule="evenodd"/>
-          <path class="hot cut done" d="M46 16H94V20H98V88H94V92H46V88H42V20H46Z"/>
-          <path class="hot cut done" d="M50 24H68V36H50Z"/>
-          <path class="hot cut done" d="M75 30a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/>
-          <path class="hot cut done" d="M82 30a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/>
-          <path class="hot cut done" d="M89 30a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/>
-          <path class="hot cut done" d="M60 42H80V56H60Z"/>
-          <path class="hot cut done" d="M50 62H64V74H50Z"/>
-          <path class="hot cut done" d="M76 62H90V74H76Z"/>
-          <path class="ln hw pop on" d="M54 81H86M54 85H86"/>
-          <g class="hw pop on"><rect class="solid" x="39" y="26" width="3" height="9" rx="1"/><rect class="solid" x="39" y="70" width="3" height="9" rx="1"/></g>
-          <rect class="solid hw pop on" x="90.5" y="43" width="3" height="12" rx="1.5"/>
-          <g class="hw pop on"><rect class="coat" x="118" y="70" width="24" height="12" rx="1"/><text class="label" x="130" y="90">RAL 7035</text></g>
-          <path class="guide gun-path" d="M38 10H102"/>
+          <path class="hot cut done" d="M76 8H136A2 2 0 0 1 138 10V90A2 2 0 0 1 136 92H76A2 2 0 0 1 74 90V10A2 2 0 0 1 76 8Z"/>
+          <path class="hot cut done" d="M79.5 14H124.5A1.5 1.5 0 0 1 126 15.5V34.5A1.5 1.5 0 0 1 124.5 36H79.5A1.5 1.5 0 0 1 78 34.5V15.5A1.5 1.5 0 0 1 79.5 14Z"/>
+          <path class="hot cut done" d="M79.5 39H124.5A1.5 1.5 0 0 1 126 40.5V59.5A1.5 1.5 0 0 1 124.5 61H79.5A1.5 1.5 0 0 1 78 59.5V40.5A1.5 1.5 0 0 1 79.5 39Z"/>
+          <path class="hot cut done" d="M79.5 64H124.5A1.5 1.5 0 0 1 126 65.5V84.5A1.5 1.5 0 0 1 124.5 86H79.5A1.5 1.5 0 0 1 78 84.5V65.5A1.5 1.5 0 0 1 79.5 64Z"/>
+          <path class="lt" d="M132 12V88"/>
+          <rect class="solid hw pop on" x="133.5" y="43" width="3" height="14" rx="1.5"/>
+          <g class="hw pop on"><rect class="coat" x="24" y="70" width="24" height="12" rx="1"/><text class="label" x="36" y="90">RAL 7035</text></g>
+          <path class="guide gun-path" d="M70 4H142"/>
           <g class="sparks"></g>
           <g class="head" style="opacity:0"><path class="solid" d="M-6-18H6V-10L2-4H-2L-6-10Z"/><path class="hot" d="M0-4V0"/></g>
           <g class="gun" style="opacity:0"><path class="solid" d="M-4-10H4V-4L1 0H-1L-4-4Z"/><path class="ln" d="M0-10V-16H8"/><path class="lt" d="M0 2L-7 12M0 2V12M0 2L7 12"/></g>
@@ -555,22 +550,30 @@
         <h3>Assembly</h3><p>Busbars, switchgear and control wiring are fitted and ferruled to the approved drawings.</p>
       </li>
       <li>
-        <!-- Test current pulses around the loop through the meter; the needle climbs and the pass lamp lights -->
+        <!-- The assembled cabinet goes on test: the probe touches each module while the tester counts up its insulation resistance, the rows tick off, the lamps light for the functional run and a QC tag swings onto the handle -->
         <svg class="vg" data-step="testing" viewBox="0 0 160 100" aria-hidden="true">
-          <path class="lt" d="M6 90H52"/>
-          <rect class="ln" x="12" y="30" width="34" height="60" rx="2"/>
-          <path class="ln" d="M29 30V90"/>
-          <circle class="lamp on" style="--c:#2E9E5B" cx="21" cy="40" r="2.6"/>
-          <path class="lt loop" d="M46 46H70V56H150V84H46"/>
-          <circle class="pulse" r="2.2" style="opacity:0"/>
-          <circle class="pulse" r="2.2" style="opacity:0"/>
-          <circle class="pulse" r="2.2" style="opacity:0"/>
-          <circle class="solid" cx="112" cy="56" r="22"/>
-          <path class="ln" d="M98.1 56A16 16 0 0 1 125.9 56"/>
-          <path class="hot" d="M120 50.1A16 16 0 0 1 125.9 56"/>
-          <path class="needle" d="M112 64V49" transform="rotate(45 112 64)"/>
-          <circle class="pivot" cx="112" cy="64" r="1.8"/>
-          <text class="label" x="112" y="73">MΩ</text>
+          <path class="ln" d="M4 90H144"/>
+          <rect class="ln" x="74" y="8" width="64" height="84" rx="2"/>
+          <path class="lt" d="M132 12V88"/>
+          <rect class="solid" x="133.5" y="43" width="3" height="14" rx="1.5"/>
+          <g transform="translate(102 25)"><rect class="solid" x="-21" y="-8" width="42" height="16" rx="2"/><rect class="ln" x="-15" y="-4" width="9" height="8" rx="1"/><path class="ln" d="M-1-2H8M-1 2H5"/><circle class="lamp on" style="--c:#2E9E5B" cx="14" cy="0" r="2.2"/></g>
+          <g transform="translate(102 50)"><rect class="solid" x="-21" y="-8" width="42" height="16" rx="2"/><rect class="ln" x="-15" y="-4" width="9" height="8" rx="1"/><path class="ln" d="M-1-2H8M-1 2H5"/><circle class="lamp on" style="--c:#2E9E5B" cx="14" cy="0" r="2.2"/></g>
+          <g transform="translate(102 75)"><rect class="solid" x="-21" y="-8" width="42" height="16" rx="2"/><rect class="ln" x="-15" y="-4" width="9" height="8" rx="1"/><path class="ln" d="M-1-2H8M-1 2H5"/><circle class="lamp on" style="--c:#2E9E5B" cx="14" cy="0" r="2.2"/></g>
+          <path class="hot tick pop on" d="M146 24l2.5 2.5 5-5"/>
+          <path class="hot tick pop on" d="M146 49l2.5 2.5 5-5"/>
+          <path class="hot tick pop on" d="M146 74l2.5 2.5 5-5"/>
+          <rect class="solid" x="8" y="50" width="40" height="40" rx="2.5"/>
+          <rect class="screen" x="13" y="55" width="30" height="13" rx="1.5"/>
+          <text class="readout" x="28" y="63.8">PASS</text>
+          <g class="knob" transform="translate(20 79) rotate(40)"><circle class="solid" r="4.5"/><path class="ln" d="M0-1.5V-4.5"/></g>
+          <path class="lt" d="M13.5 72.5l1.5 1.5M20 71V73M26.5 72.5l-1.5 1.5"/>
+          <circle class="solid" cx="34" cy="80" r="1.8"/>
+          <circle class="solid jack" cx="42" cy="80" r="1.8"/>
+          <path class="lead"/>
+          <circle class="pulse" r="1.8" style="opacity:0"/>
+          <circle class="pulse" r="1.8" style="opacity:0"/>
+          <g class="probe"><path class="hot" d="M0 0H-4"/><rect class="solid" x="-16" y="-2" width="12" height="4" rx="1"/><path class="ln" d="M-6.5-3.5V3.5"/></g>
+          <g class="tag pop on" transform="translate(135 57)"><path class="ln" d="M0 0V4"/><rect class="solid" x="-7" y="4" width="14" height="16" rx="2"/><circle class="ln" cx="0" cy="7.5" r="1.1"/><path class="hot" d="M-3.5 13.5l2.5 2.5 5-5"/></g>
         </svg>
         <h3>Testing</h3><p>High-voltage, insulation resistance and functional tests, with your team welcome to witness.</p>
       </li>
@@ -3121,13 +3124,13 @@ requestAnimationFrame(frame);
           }
           fade(head, 0);
           await fade(gun, 1, 200);
-          await follow(gun, gunPath, 1200, { onT: (k, p) => clip.setAttribute("width", Math.max(0, p.x - 40).toFixed(2)) });
+          await follow(gun, gunPath, 1200, { onT: (k, p) => clip.setAttribute("width", Math.max(0, p.x - 72).toFixed(2)) });
           fade(gun, 0);
           for (const h of hw) { await wait(150); on(h, true); }
         },
         done() {
           cuts.forEach((c) => { drawn(c); c.classList.add("done"); }); on(hw, true);
-          clip.setAttribute("width", 60); head.style.opacity = 0; gun.style.opacity = 0;
+          clip.setAttribute("width", 68); head.style.opacity = 0; gun.style.opacity = 0;
         },
       };
     },
@@ -3154,28 +3157,56 @@ requestAnimationFrame(frame);
     },
 
     testing(svg) {
-      const loop = q(svg, ".loop"), pulses = qa(svg, ".pulse"), needle = q(svg, ".needle"), lamp = q(svg, ".lamp");
-      const aim = (a) => needle.setAttribute("transform", `rotate(${a.toFixed(2)} 112 64)`);
+      const probe = q(svg, ".probe"), lead = q(svg, ".lead"), pulses = qa(svg, ".pulse"), readout = q(svg, ".readout");
+      const knob = q(svg, ".knob"), ticks = qa(svg, ".tick"), lamps = qa(svg, ".lamp"), tag = q(svg, ".tag");
+      // Probe tip rests on the bench, then touches each module's breaker; readings in MΩ
+      const rest = { x: 70, y: 88 }, targets = [25, 50, 75].map((y) => ({ x: 86, y })), readings = [512, 548, 530];
+      let tip = rest;
+      // The lead sags from the tester's jack to the back of the probe, resting on the bench at most
+      const setProbe = (x, y) => {
+        tip = { x, y }; put(probe, x, y);
+        const tx = x - 16;
+        lead.setAttribute("d", `M42 80C42 89 ${(tx - 14).toFixed(2)} ${Math.min(89, y + 16).toFixed(2)} ${tx.toFixed(2)} ${y.toFixed(2)}`);
+      };
+      // Travel in a shallow arc, as if lifted by hand
+      const reach = (to, dur) => { const from = tip; return tween(dur, (k) => setProbe(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k - 10 * Math.sin(Math.PI * k))); };
+      const turn = (a) => { const m = /rotate\((-?[\d.]+)/.exec(knob.getAttribute("transform")), from = m ? +m[1] : 0; return tween(250, (k) => put(knob, 20, 79, from + (a - from) * k), ease.back); };
+      const show = (t) => { readout.textContent = t; };
       return {
-        reset() { pulses.forEach((p) => { p.style.opacity = 0; }); aim(-60); on(lamp, false); loop.classList.remove("live"); },
-        async play() {
-          loop.classList.add("live");
-          const laps = 2, lag = .14;
-          await tween(2800, (k) => {
-            pulses.forEach((p, i) => {
-              const t = k * laps - i * lag, u = ((t % 1) + 1) % 1;
-              place(p, loop, u);
-              // Fade in and out at the loop's ends so the jump back to the start is hidden
-              p.style.opacity = t < 0 ? 0 : Math.min(1, u / .04, (1 - u) / .04);
-            });
-            aim(-60 + 100 * ease.out(k) + Math.sin(k * 34) * 7 * (1 - k));
-          }, ease.lin);
-          pulses.forEach((p) => { p.style.opacity = 0; });
-          loop.classList.remove("live");
-          await tween(450, (k) => aim(40 + 5 * k), ease.back);
-          on(lamp, true);
+        reset() {
+          setProbe(rest.x, rest.y); put(knob, 20, 79, -40); show("----");
+          on(ticks, false); on(lamps, false); on(tag, false); put(tag, 135, 57);
+          pulses.forEach((p) => { p.style.opacity = 0; }); lead.classList.remove("live");
         },
-        done() { aim(45); on(lamp, true); },
+        async play() {
+          await turn(0);
+          for (const [i, t] of targets.entries()) {
+            await reach(t, i ? 340 : 480);
+            lead.classList.add("live");
+            await tween(560, (k) => {
+              pulses.forEach((p, j) => {
+                const u = (k * 2.4 - j * .5) % 1;
+                place(p, lead, u);
+                p.style.opacity = k * 2.4 - j * .5 < 0 ? 0 : Math.min(1, u / .08, (1 - u) / .08);
+              });
+              show(`${Math.round(readings[i] * ease.out(k))}MΩ`);
+            }, ease.lin);
+            pulses.forEach((p) => { p.style.opacity = 0; });
+            lead.classList.remove("live");
+            on(ticks[i], true);
+            await wait(120);
+          }
+          // Functional run: probe back on the bench, knob to FN, each module's lamp comes on
+          await Promise.all([reach(rest, 420), turn(40)]);
+          for (const l of lamps) { on(l, true); await wait(160); }
+          show("PASS");
+          on(tag, true);
+          await tween(1300, (k) => put(tag, 135, 57, 38 * Math.exp(-4 * k) * Math.cos(k * 15)), ease.lin);
+        },
+        done() {
+          setProbe(rest.x, rest.y); put(knob, 20, 79, 40); show("PASS");
+          on(ticks, true); on(lamps, true); on(tag, true); put(tag, 135, 57);
+        },
       };
     },
 
