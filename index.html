@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..900;1,62..125,300..900&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="assets/lt-panel.webp">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
@@ -52,7 +51,6 @@
 
   .display {
     font-stretch: var(--wide);
-    font-style: italic;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.02;
@@ -108,15 +106,42 @@
   .hero-copy .hero-sub { margin: 12px 0 0; max-width: none; font-size: clamp(16px, 1.3vw, 19px); font-weight: 600; color: var(--ink); }
 
   #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s; touch-action: pan-y; }
-  .fallback {
-    position: absolute; left: 50%; bottom: 3vh;
-    width: min(84vw, 1100px, (100svh - 440px) * 1.65);
+  /* Line drawing of the lineup, traced on a loop while the 3D scene loads; left static if it fails */
+  .loader {
+    position: absolute; left: 50%; bottom: 5vh;
+    width: clamp(260px, min(80vw, 860px, (100svh - 420px) * 2.2), 860px);
     transform: translateX(-50%);
+    display: grid; justify-items: center; gap: 14px;
     transition: opacity .6s;
-    user-select: none;
+    pointer-events: none; user-select: none;
   }
+  .loader svg { width: 100%; height: auto; overflow: visible; }
+  .loader .ln {
+    fill: none; stroke: var(--graphite); stroke-width: 1.2; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+    animation: draw 3.6s cubic-bezier(.6, 0, .3, 1) infinite; animation-delay: calc(var(--i) * 45ms);
+  }
+  .loader .floor { stroke: var(--steel); }
+  .loader .lamp { fill: var(--steel); animation: lamp-on 3.6s infinite; }
+  .loader .lamp:nth-of-type(2) { animation-delay: .12s; }
+  .loader .lamp:nth-of-type(3) { animation-delay: .24s; }
+  .loader__status { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .loader__status .failed, .no-gl .loader__status .loading { display: none; }
+  .no-gl .loader__status .failed { display: inline; }
+  @keyframes draw {
+    0% { stroke-dashoffset: 1; opacity: 1; }
+    45% { stroke-dashoffset: 0; }
+    84% { stroke-dashoffset: 0; opacity: 1; }
+    96%, 100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  @keyframes lamp-on {
+    0%, 52% { fill: var(--steel); }
+    58%, 84% { fill: var(--c); filter: drop-shadow(0 0 3px var(--c)); }
+    96%, 100% { fill: var(--steel); }
+  }
+  .no-gl .loader .ln, .no-gl .loader .lamp { animation: none; stroke-dasharray: none; }
   .gl-ready #gl { opacity: 1; }
-  .gl-ready .fallback { opacity: 0; }
+  .gl-ready .loader { opacity: 0; }
   .no-gl .spots, .no-gl .captions { display: none; }
 
   .spots { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
@@ -273,6 +298,7 @@
     html { scroll-behavior: auto; }
     .spot.is-active::before { animation: none; }
     .caption { transition: none; }
+    .loader .ln, .loader .lamp { animation: none; stroke-dasharray: none; }
   }
 </style>
 </head>
@@ -305,7 +331,47 @@
         </div>
       </div>
 
-      <img class="fallback" src="assets/lt-panel.webp" alt="Indway LT panel lineup with ACB incomer, metering, outgoing feeders and drawout motor starter modules" width="1448" height="880" draggable="false">
+      <div class="loader" role="status">
+        <svg viewBox="0 60 600 226" role="img" aria-label="Line drawing of an Indway LT panel lineup with ACB incomer, metering, outgoing feeders and drawout motor starter modules">
+          <line class="ln floor" pathLength="1" style="--i:0" x1="20" y1="282" x2="580" y2="282"/>
+          <rect class="ln" pathLength="1" style="--i:1" x="60" y="70" width="480" height="206"/>
+          <line class="ln" pathLength="1" style="--i:2" x1="52" y1="70" x2="548" y2="70"/>
+          <rect class="ln" pathLength="1" style="--i:3" x="60" y="266" width="480" height="10"/>
+          <!-- ACB incomer -->
+          <rect class="ln" pathLength="1" style="--i:4" x="66" y="78" width="108" height="184"/>
+          <rect class="ln" pathLength="1" style="--i:5" x="86" y="134" width="68" height="56" rx="3"/>
+          <line class="ln" pathLength="1" style="--i:6" x1="100" y1="150" x2="140" y2="150"/>
+          <line class="ln" pathLength="1" style="--i:7" x1="100" y1="174" x2="140" y2="174"/>
+          <rect class="ln" pathLength="1" style="--i:8" x="160" y="200" width="6" height="26" rx="3"/>
+          <!-- Metering -->
+          <rect class="ln" pathLength="1" style="--i:9" x="180" y="78" width="96" height="184"/>
+          <rect class="ln" pathLength="1" style="--i:10" x="194" y="94" width="30" height="30" rx="2"/>
+          <rect class="ln" pathLength="1" style="--i:11" x="232" y="94" width="30" height="30" rx="2"/>
+          <rect class="ln" pathLength="1" style="--i:12" x="194" y="170" width="68" height="40" rx="2"/>
+          <circle class="lamp" style="--c:#D6452B" cx="208" cy="148" r="6"/>
+          <circle class="lamp" style="--c:#E8B420" cx="228" cy="148" r="6"/>
+          <circle class="lamp" style="--c:#2F6FD1" cx="248" cy="148" r="6"/>
+          <!-- Outgoing feeders -->
+          <rect class="ln" pathLength="1" style="--i:13" x="282" y="78" width="116" height="58"/>
+          <rect class="ln" pathLength="1" style="--i:14" x="282" y="141" width="116" height="58"/>
+          <rect class="ln" pathLength="1" style="--i:15" x="282" y="204" width="116" height="58"/>
+          <circle class="ln" pathLength="1" style="--i:16" cx="385" cy="107" r="4"/>
+          <circle class="ln" pathLength="1" style="--i:17" cx="385" cy="170" r="4"/>
+          <circle class="ln" pathLength="1" style="--i:18" cx="385" cy="233" r="4"/>
+          <!-- Drawout motor starters -->
+          <rect class="ln" pathLength="1" style="--i:19" x="404" y="78" width="130" height="33"/>
+          <rect class="ln" pathLength="1" style="--i:20" x="404" y="115" width="130" height="33"/>
+          <rect class="ln" pathLength="1" style="--i:21" x="404" y="152" width="130" height="33"/>
+          <rect class="ln" pathLength="1" style="--i:22" x="404" y="189" width="130" height="33"/>
+          <rect class="ln" pathLength="1" style="--i:23" x="404" y="226" width="130" height="33"/>
+          <line class="ln" pathLength="1" style="--i:24" x1="418" y1="94.5" x2="446" y2="94.5"/>
+          <line class="ln" pathLength="1" style="--i:25" x1="418" y1="131.5" x2="446" y2="131.5"/>
+          <line class="ln" pathLength="1" style="--i:26" x1="418" y1="168.5" x2="446" y2="168.5"/>
+          <line class="ln" pathLength="1" style="--i:27" x1="418" y1="205.5" x2="446" y2="205.5"/>
+          <line class="ln" pathLength="1" style="--i:28" x1="418" y1="242.5" x2="446" y2="242.5"/>
+        </svg>
+        <p class="loader__status"><span class="loading">Loading 3D model</span><span class="failed">3D view unavailable</span></p>
+      </div>
       <canvas id="gl" aria-label="Interactive 3D model of an Indway LT panel lineup"></canvas>
       <div class="spots" id="spots"></div>
       <div class="captions" id="inside"></div>
@@ -385,8 +451,11 @@
 </footer>
 
 <script>
-  // If WebGL or the CDN is unavailable, fall back to the static photo.
-  setTimeout(() => { if (!window.__glReady) document.documentElement.classList.add("no-gl"); }, 8000);
+  // If WebGL or the CDN is unavailable, stop the loader and leave the drawing in place.
+  const glFailed = () => { if (!window.__glReady) document.documentElement.classList.add("no-gl"); };
+  setTimeout(glFailed, 8000);
+  // A three.js module that fails to download, or a script error before the first frame, fails fast
+  addEventListener("error", (e) => { if (e.error || e.target instanceof HTMLScriptElement) glFailed(); }, true);
 </script>
 <script type="module">
 import * as THREE from "three";
@@ -549,6 +618,33 @@ const paint = (roughness) => {
   m.userData.metricUV = true;
   return m;
 };
+// Light falls off with depth inside the busbar chamber: the rear phases and back wall sit in the alley's
+// own shadow. Fakes the occlusion a path tracer would give, darkening surfaces toward the back wall.
+// `near` and `far` are the world depths where the falloff starts and bottoms out.
+function chamberShade(m, near = 0.42, far = -0.3) {
+  const ramp = `smoothstep(${near.toFixed(3)}, ${far.toFixed(3)}, vChamberZ)`;
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vChamberZ;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvChamberZ = (modelMatrix * vec4(transformed, 1.0)).z;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying float vChamberZ;")
+      .replace("#include <opaque_fragment>", `#include <opaque_fragment>\ngl_FragColor.rgb *= mix(1.0, 0.1, pow(${ramp}, 0.7));`);
+  };
+  // Every closure has the same source, so three.js would otherwise share one program across ramps
+  m.customProgramCacheKey = () => `chamber:${ramp}`;
+  return m;
+}
+// The ACB cradle is a closed steel pocket lit only through the gap round the breaker: anything behind
+// the door face (world z 0.421) falls into shadow within a few centimetres and is near black at the
+// shutters. Parts of the breaker pick this up as they rack out of the pocket.
+function cradleShade(m) {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vCradleZ;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvCradleZ = (modelMatrix * vec4(transformed, 1.0)).z;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying float vCradleZ;")
+      .replace("#include <opaque_fragment>", "#include <opaque_fragment>\ngl_FragColor.rgb *= mix(1.0, 0.12, pow(smoothstep(0.425, 0.08, vCradleZ), 0.55));");
+  };
+  return m;
+}
 const M = {
   door: paint(.4),
   body: paint(.46),
@@ -558,9 +654,18 @@ const M = {
   black: std(0x18191B, .38, .1),
   plate: std(0x2F3134, .5, .2),
   red: std(0xC4262B, .35, 0),
-  copper: std(0xE39A66, .32, .85),
-  support: std(0x6B2E24, .6, 0),
+  // Aluminium busbar (E91E grade): satin mill finish, not as bright as polished copper
+  alu: chamberShade(std(0xC4C8CC, .38, 1, { envMapIntensity: .45 })),
+  bolt: chamberShade(std(0x8E9297, .3, 1, { envMapIntensity: .45 })),
+  // Busbar chamber lining: little room light reaches inside the enclosed alley, so the environment
+  // term (which otherwise lights every surface evenly) is cut right down and the shadows go deep
+  cavity: chamberShade(std(0x3A3D3C, .85, 0, { envMapIntensity: .18 })),
+  support: chamberShade(std(0x6B2E24, .6, 0, { envMapIntensity: .3 })),
   label: std(0xEDEDEA, .7, 0),
+  gasket: std(0x141516, .8, 0, { envMapIntensity: .5 }),
+  // Die-cast aluminium hinge: duller and a touch darker than the busbar flats
+  hinge: std(0xB4B8BC, .42, 1),
+  screw: std(0x7D8186, .35, 1),
   screen: std(0x0B1418, .25, 0, { emissive: 0x2F7390, emissiveIntensity: .9 }),
 };
 const lampMat = (c) => std(c, .2, 0, { emissive: c, emissiveIntensity: 1.1 });
@@ -637,6 +742,23 @@ function box(parent, w, h, d, mat, x, y, z, r = 0) {
   parent.add(m);
   return m;
 }
+// A box with a rectangular opening through it front to back; hole is { x, y, w, h } from the slab's centre.
+// bev rounds the outer edges like box()'s r, and the opening is grown to match so it keeps its size.
+function holedSlab(parent, w, h, d, mat, x, y, z, hole, bev = 0) {
+  const s = new THREE.Shape(), hw = w / 2 - bev, hh = h / 2 - bev;
+  s.moveTo(-hw, -hh); s.lineTo(hw, -hh); s.lineTo(hw, hh); s.lineTo(-hw, hh); s.closePath();
+  const ox = hole.w / 2 + bev, oy = hole.h / 2 + bev, p = new THREE.Path();
+  p.moveTo(hole.x - ox, hole.y - oy); p.lineTo(hole.x - ox, hole.y + oy); p.lineTo(hole.x + ox, hole.y + oy); p.lineTo(hole.x + ox, hole.y - oy); p.closePath();
+  s.holes.push(p);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: d - 2 * bev, bevelEnabled: bev > 0,
+    bevelThickness: bev, bevelSize: bev, bevelSegments: 3, curveSegments: 1 });
+  if (mat.userData.metricUV) metricUV(geo);
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z - d / 2 + bev);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
 function cyl(parent, r, h, mat, x, y, z, seg = 48) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
   m.rotation.x = Math.PI / 2;
@@ -648,9 +770,66 @@ function cyl(parent, r, h, mat, x, y, z, seg = 48) {
 
 // Dimensions in metres
 const D = 0.8, PL = 0.1, BH = 2.0, CH = 0.3, FZ = D / 2, T = 0.02, G = 0.004;
+// Main busbars: flat height/thickness/air gap, heat-shrink wall, the pack's height above the chamber
+// floor, the front face of the first (R) phase, and the phase-to-phase pitch front to back
+const BAR_H = 0.08, BAR_T = 0.008, BAR_GAP = 0.008, SLV = 0.001, BUS_Y = 0.035, BUS_Z0 = 0.1, BUS_PITCH = 0.09;
 
-// A door is a group with its origin at the door's bottom-left hinge; parts are placed in door space.
-function door(parent, x, y, w, h, { screws = true } = {}) {
+/* ---------- Quarter-turn door lock (die-cast cam lock, double-bit insert) ---------- */
+// Black zinc body: a 23 mm domed bezel with a chamfered rim, the plug sitting in a shallow well
+// inside it, and a double-bit key bar across the plug face, stood vertical in the locked position.
+const dlBezelGeo = lathe([[0.0115, 0], [0.0115, 0.0011], [0.0111, 0.0019], [0.0102, 0.0026], [0.0090, 0.0029],
+  [0.0080, 0.0029], [0.0077, 0.0026], [0.0075, 0.0012], [0, 0.0012]], 96);
+const dlPlugGeo = lathe([[0.0071, 0.0012], [0.0071, 0.0020], [0.0068, 0.0024], [0, 0.0024]], 64);
+const dlBarGeo = new RoundedBoxGeometry(0.0034, 0.0118, 0.0026, 2, 0.0008);
+const DL = {
+  body: new THREE.MeshPhysicalMaterial({ color: 0x131416, roughness: .3, metalness: .35, clearcoat: .5, clearcoatRoughness: .25 }),
+  plug: new THREE.MeshPhysicalMaterial({ color: 0x1A1B1D, roughness: .45, metalness: .5, clearcoat: .2, clearcoatRoughness: .4 }),
+  slot: new THREE.MeshBasicMaterial({ color: 0x030303, ...DECAL }),
+};
+const dlSlotGeo = new THREE.PlaneGeometry(0.0011, 0.0074);
+function doorLock(p, x, y) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  const add = (geo, mat, px = 0, py = 0, pz = 0) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz);
+    m.castShadow = m.receiveShadow = true; g.add(m); return m;
+  };
+  add(dlBezelGeo, DL.body);
+  add(dlPlugGeo, DL.plug);
+  // Double-bit bar standing off the plug, with the key's split cut into its face
+  add(dlBarGeo, DL.body, 0, 0, 0.0024 + 0.0013);
+  add(dlSlotGeo, DL.slot, 0, 0, 0.0024 + 0.0026 + 0.0001).castShadow = false;
+}
+
+/* ---------- Die-cast aluminium door hinge (concealed, inside the door) ---------- */
+// The hinge sits behind the door, so from outside the lineup shows only the plain door edge. A 14 mm
+// barrel runs just behind the door's left edge: the upper knuckle is cast with a 40 mm leaf screwed
+// to the door's inside face (the gasket runs over it), the lower knuckle with a leaf fixed to the
+// back of the frame upright. The pin shows as a small cap at each end, seen once the door is open.
+const HR = 0.007, HZ = -HR; // barrel radius, and the hinge axis's depth in door space (behind the door)
+const knuckleGeo = (len) => new THREE.LatheGeometry([[0, 0], [HR - 0.001, 0], [HR, 0.001], [HR, len - 0.001],
+  [HR - 0.001, len], [0, len]].map(([r, h]) => new THREE.Vector2(r, h)), 40);
+const pinCapGeo = new THREE.SphereGeometry(0.0032, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+function hinge(dp, fp, fx, fy, fz, yy, H) {
+  const add = (p, geo, mat, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+    m.castShadow = m.receiveShadow = true; p.add(m); return m;
+  };
+  const k = (H - 0.002) / 2;
+  // Door side: upper knuckle and a leaf on the inside face, two screws inboard of the gasket
+  add(dp, knuckleGeo(k), M.hinge, 0, yy + 0.001, HZ);
+  box(dp, 0.04, H * 0.85, 0.003, M.hinge, 0.02, yy + H * 0.075, -0.0015, 0.001);
+  for (const o of [-0.012, 0.024]) cyl(dp, 0.0036, 0.0016, M.screw, 0.032, yy + o, -0.0046, 16);
+  // Frame side: lower knuckle, a leaf on the back of the frame upright, pin caps
+  add(fp, knuckleGeo(k), M.hinge, fx, fy + yy - 0.001 - k, fz + HZ);
+  box(fp, 0.02, k * 0.85, 0.003, M.hinge, fx - 0.01, fy + yy - 0.001 - k / 2, fz - 0.0025, 0.001);
+  add(fp, pinCapGeo, M.screw, fx, fy + yy + k + 0.001, fz + HZ);
+  add(fp, pinCapGeo, M.screw, fx, fy + yy - k - 0.001, fz + HZ).rotation.x = Math.PI;
+}
+
+// A door is a group with its origin at the door's bottom-left corner; parts are placed in door space.
+// It swings about the concealed hinge pin, just behind that corner (see swing()). Doors on
+// sliding modules pass `slide` so the frame half of each hinge travels with them.
+function door(parent, x, y, w, h, { screws = true, slide = false, hole = null } = {}) {
   const pivot = new THREE.Group();
   pivot.position.set(x + G, y + G, FZ + 0.001);
   parent.add(pivot);
@@ -661,14 +840,33 @@ function door(parent, x, y, w, h, { screws = true } = {}) {
   box(parent, w, rv, 0.001, M.gap, x + w / 2, y + h - rv / 2, z);
   box(parent, rv, h, 0.001, M.gap, x + rv / 2, y + h / 2, z);
   box(parent, rv, h, 0.001, M.gap, x + w - rv / 2, y + h / 2, z);
-  box(pivot, dw, dh, T, M.door, dw / 2, dh / 2, T / 2, 0.004);
+  if (hole) holedSlab(pivot, dw, dh, T, M.door, dw / 2, dh / 2, T / 2, { ...hole, x: hole.x - dw / 2, y: hole.y - dh / 2 }, 0.004);
+  else box(pivot, dw, dh, T, M.door, dw / 2, dh / 2, T / 2, 0.004);
+  // EPDM sealing gasket on the inside face, 12 x 6 mm bulb section set 12 mm in from the door edge.
+  // It stands proud of the door's back into the frame, so it only shows once the door swings open.
+  const gi = 0.012, gw = 0.012, gd = 0.006, gz = -gd / 2 + 0.001;
+  box(pivot, dw - 2 * gi, gw, gd, M.gasket, dw / 2, gi + gw / 2, gz, 0.0025);
+  box(pivot, dw - 2 * gi, gw, gd, M.gasket, dw / 2, dh - gi - gw / 2, gz, 0.0025);
+  box(pivot, gw, dh - 2 * gi, gd, M.gasket, gi + gw / 2, dh / 2, gz, 0.0025);
+  box(pivot, gw, dh - 2 * gi, gd, M.gasket, dw - gi - gw / 2, dh / 2, gz, 0.0025);
   if (screws) {
     const ys = dh > 0.3 ? [0.07, dh - 0.07] : [dh / 2];
-    for (const yy of ys) cyl(pivot, 0.009, 0.008, M.black, dw - 0.03, yy, T);
-    if (dh > 0.3) for (const yy of [0.12, dh - 0.12]) box(pivot, 0.012, 0.05, 0.012, M.body, -0.002, yy, T / 2);
+    for (const yy of ys) doorLock(pivot, dw - 0.03, yy);
   }
-  pivot.userData = { dw, dh };
+  const H = dh > 0.24 ? 0.07 : 0.05;
+  const hy = dh > 0.45 ? [0.12, dh - 0.12] : dh > 0.24 ? [0.065, dh - 0.065] : [dh / 2];
+  for (const yy of hy) {
+    if (slide) hinge(pivot, pivot, 0, 0, 0, yy, H);
+    else hinge(pivot, parent, pivot.position.x, pivot.position.y, pivot.position.z, yy, H);
+  }
+  pivot.userData = { dw, dh, p0: pivot.position.clone() };
   return pivot;
+}
+// Open a door by angle a about its hinge pin: rotate, then shift so the pin line stays put
+function swing(d, a) {
+  d.rotation.y = a;
+  const { p0 } = d.userData;
+  d.position.set(p0.x - HZ * Math.sin(a), p0.y, p0.z + HZ - HZ * Math.cos(a));
 }
 function vent(p, x, y, w, h) {
   const t = ventTex.clone(); t.repeat.set(w / 0.04, h / 0.04); t.needsUpdate = true;
@@ -1193,6 +1391,13 @@ const ACB_W = 0.3, ACB_H = 0.4, ACB_D = 0.34, ACB_Z = 0.03, ACB_PX = 3000;
 const ACB_TU = { x: -0.074, y: 0.045, w: 0.112, h: 0.235, d: 0.012 };
 const ACB_LCD = { y: 0.058, w: 0.076, h: 0.057 };
 const ACB_MX = 0.04, ACB_LEVER_X = 0.107;
+// Draw-out geometry: the cut-out through door and carcass (centred ACB_DOOR_Y up the incomer door),
+// the cradle depth behind the door face, the rack-out travel on the extension rails, the moulded
+// case behind the fascia, the pole centres, and the rails running low on each side
+const ACB_DOOR_Y = 0.5, ACB_OPEN = { w: 0.31, h: 0.41 }, ACB_CD = 0.36, ACB_TRAVEL = 0.15;
+const ACB_CASE = { w: 0.25, h: 0.34, d: 0.25, y: -0.01 };
+const ACB_POLES = [-0.08, 0, 0.08];
+const ACB_RAIL = { x: 0.134, y: -0.186, w: 0.014, h: 0.024 };
 const acbFont = (wt, mm, px = ACB_PX) => `${wt} ${mm * px / 1000}px Arial, Helvetica, sans-serif`;
 const acbFaceTex = canvasTex(ACB_W * ACB_PX, ACB_H * ACB_PX, (g, w, h) => {
   const px = ACB_PX, X = (x) => (x + ACB_W / 2) * px, Y = (y) => (ACB_H / 2 - y) * px;
@@ -1306,7 +1511,34 @@ const ACB = {
   flange: new THREE.MeshPhysicalMaterial({ color: 0x1A1B1D, roughness: .55, clearcoat: .15, clearcoatRoughness: .5 }),
   hole: std(0x060707, .95, 0),
   padlock: new THREE.MeshPhysicalMaterial({ color: 0xE8731A, roughness: .4, clearcoat: .4, clearcoatRoughness: .3 }),
+  // Shown once racked out: the breaker is tripped open before it can move, and the indicator reads disconnected
+  open: acbFlag("OPEN", "#2E8B47", "#FFFFFF"),
+  disc: acbFlag("DISC.", "#2E8B47", "#FFFFFF"),
+  // Moving part: glass-filled polyester case and arc chutes, zinc-plated side plates and rails,
+  // copper terminal spuds, silver-plated cluster fingers held by steel garter springs
+  moulded: cradleShade(new THREE.MeshPhysicalMaterial({ color: 0x2A2C30, roughness: .6, clearcoat: .08, clearcoatRoughness: .6 })),
+  chute: cradleShade(std(0x222326, .7, 0)),
+  plate: cradleShade(std(0x979CA0, .5, .8)),
+  rail: cradleShade(std(0xC2C5C7, .35, .9)),
+  screw: cradleShade(std(0x9A9EA2, .3, 1)),
+  copper: cradleShade(std(0xC27A4E, .32, 1)),
+  silver: cradleShade(std(0xDADDE0, .22, 1)),
+  spring: cradleShade(std(0x55595E, .35, 1)),
+  contact: cradleShade(std(0x9C8656, .45, .9)),
+  // Fixed part: zinc-plated cradle darkening toward the back, grey insulating shutters
+  cradle: cradleShade(std(0x878B8F, .55, .6)),
+  cradleBack: cradleShade(std(0x2A2C2F, .8, 0)),
+  cradleBlack: cradleShade(std(0x1C1D20, .55, 0)),
+  shutter: cradleShade(std(0x6A6F74, .55, 0)),
+  danger: cradleShade(acbLabel(128, 112, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = "#1A1A1A"; g.beginPath(); g.moveTo(w / 2, 4); g.lineTo(w - 4, h - 4); g.lineTo(4, h - 4); g.closePath(); g.fill();
+    g.fillStyle = "#F2C318"; g.beginPath(); g.moveTo(w / 2, 20); g.lineTo(w - 18, h - 12); g.lineTo(18, h - 12); g.closePath(); g.fill();
+    g.fillStyle = "#1A1A1A"; g.beginPath();
+    g.moveTo(68, 34); g.lineTo(50, 70); g.lineTo(64, 70); g.lineTo(56, 96); g.lineTo(80, 60); g.lineTo(66, 60); g.lineTo(76, 34); g.closePath(); g.fill();
+  })),
 };
+ACB.danger.transparent = true;
 const acbCollarGeo = lathe([[0.0155, 0], [0.0155, 0.0022], [0.0146, 0.0032], [0.0121, 0.0032], [0.0121, 0.0008]], 96);
 const acbCapGeo = lathe([[0.0114, 0], [0.0114, 0.0046], [0.0108, 0.0056], [0.0094, 0.006], [0, 0.0062]], 96);
 const acbKeyGeo = lathe([[0.0085, 0], [0.0085, 0.0035], [0.0078, 0.0045], [0.0068, 0.0048], [0, 0.0048]], 80);
@@ -1329,21 +1561,116 @@ function acbBreaker(p, x, y) {
   const plane = (parent, w, h, mat, px, py, pz) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.set(px, py, pz); parent.add(m); return m;
   };
-  // Door flange: black moulded frame round the cut-out, dark behind so the opening reads when racked out
-  const fw = 0.36, fh = 0.46, fb = 0.025, ft = 0.01;
-  plane(g, fw - 2 * fb, fh - 2 * fb, ACB.hole, 0, 0, 0.0006);
+  // Door flange: black moulded frame round the cut-out
+  const fb = 0.025, fw = ACB_OPEN.w + 2 * fb, fh = ACB_OPEN.h + 2 * fb, ft = 0.01;
   box(g, fw, fb, ft, ACB.flange, 0, (fh - fb) / 2, ft / 2, 0.003);
   box(g, fw, fb, ft, ACB.flange, 0, -(fh - fb) / 2, ft / 2, 0.003);
   box(g, fb, fh - 2 * fb + 0.004, ft, ACB.flange, (fw - fb) / 2, 0, ft / 2, 0.003);
   box(g, fb, fh - 2 * fb + 0.004, ft, ACB.flange, -(fw - fb) / 2, 0, ft / 2, 0.003);
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) add(g, mccbScrewGeo, MCCB.screw, sx * (fw / 2 - fb / 2), sy * (fh / 2 - fb / 2), ft);
 
+  // Fixed part (cradle), seen through the cut-out once the breaker is drawn out: zinc-plated sheet
+  // walls, fixed guide rails low on each side, the racking screw along the floor, the secondary
+  // terminal block under the roof, and the insulating safety shutters closed over the line (top)
+  // and load (bottom) stationary contacts on the back wall.
+  const cw = fw - 2 * fb, ch = fh - 2 * fb, cd = ACB_CD;
+  box(g, 0.003, ch, cd, ACB.cradle, -cw / 2 + 0.0015, 0, -cd / 2);
+  box(g, 0.003, ch, cd, ACB.cradle, cw / 2 - 0.0015, 0, -cd / 2);
+  box(g, cw, 0.003, cd, ACB.cradle, 0, ch / 2 - 0.0015, -cd / 2);
+  box(g, cw, 0.003, cd, ACB.cradle, 0, -ch / 2 + 0.0015, -cd / 2);
+  box(g, cw, ch, 0.004, ACB.cradleBack, 0, 0, -cd);
+  for (const sx of [-1, 1]) {
+    box(g, 0.01, ACB_RAIL.h + 0.008, cd - 0.01, ACB.rail, sx * (cw / 2 - 0.008), ACB_RAIL.y, -cd / 2 - 0.005, 0.001);
+  }
+  const screw = new THREE.Group(); screw.position.set(0, -ch / 2 + 0.012, 0); g.add(screw);
+  const rod = add(screw, new THREE.CylinderGeometry(0.0065, 0.0065, cd - 0.02, 24), ACB.screw, 0, 0, -cd / 2);
+  rod.rotation.x = Math.PI / 2;
+  for (let i = 0; i < 26; i++) {
+    const t = add(screw, new THREE.CylinderGeometry(0.0082, 0.0082, 0.004, 24), ACB.screw, 0, 0, -0.03 - i * 0.013);
+    t.rotation.x = Math.PI / 2;
+  }
+  // Fixed half of the sliding secondary contacts, meeting the breaker's block when racked in
+  box(g, cw - 0.07, 0.016, 0.05, ACB.cradleBlack, 0, ch / 2 - 0.011, -0.29, 0.002);
+  for (let i = 0; i < 16; i++) box(g, 0.006, 0.003, 0.03, ACB.contact, -0.1 + i * 0.0133, ch / 2 - 0.02, -0.29, 0.0006);
+  [0.08, -0.1].forEach((sy) => {
+    box(g, cw - 0.04, 0.13, 0.006, ACB.shutter, 0, sy, -cd + 0.006, 0.003);
+    for (let i = 0; i < 6; i++) box(g, cw - 0.06, 0.004, 0.004, ACB.shutter, 0, sy - 0.05 + i * 0.02, -cd + 0.011, 0.001);
+    plane(g, 0.044, 0.038, ACB.danger, 0, sy, -cd + 0.0135);
+    // Shutter padlock tab
+    box(g, 0.014, 0.022, 0.004, ACB.padlock, cw / 2 - 0.04, sy, -cd + 0.012, 0.0015);
+  });
+
+  // Shadow the drawn-out breaker throws on the door. The key light's own shadow map is too coarse and too
+  // washed out by the fill to show it, so it is painted: the fascia's outline swept along the key light's
+  // direction over the full travel (soft, since the fascia stands well off the door), and a tighter
+  // darkening right round the breaker where the door sees less of the room. The cut-out is left clear.
+  const lift = ACB_TRAVEL + ACB_Z, sdx = -sun.position.x / sun.position.z * lift, sdy = -sun.position.y / sun.position.z * lift;
+  const SH = { w: 0.64, h: 0.84, x: sdx / 2, y: sdy / 2 };
+  const shadow = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthWrite: false, ...DECAL,
+    map: canvasTex(640, 840, (c, w, h) => {
+      const px = 1000, X = (x) => w / 2 + (x - SH.x) * px, Y = (y) => h / 2 - (y - SH.y) * px;
+      const hw = ACB_W / 2, hh = ACB_H / 2;
+      // Everything is drawn off-canvas and only its blurred shadow offset back in
+      c.shadowOffsetX = w * 2;
+      c.save(); c.translate(-w * 2, 0);
+      c.shadowColor = "rgba(0,0,0,.34)"; c.shadowBlur = 0.03 * px;
+      c.beginPath();
+      [[-hw, hh], [hw, hh], [hw + sdx, hh + sdy], [hw + sdx, -hh + sdy], [-hw + sdx, -hh + sdy], [-hw, -hh]]
+        .forEach(([x, y], k) => (k ? c.lineTo : c.moveTo).call(c, X(x), Y(y)));
+      c.closePath(); c.fill();
+      c.shadowColor = "rgba(0,0,0,.3)"; c.shadowBlur = 0.02 * px;
+      c.fillRect(X(-hw - 0.008), Y(hh + 0.008), (ACB_W + 0.016) * px, (ACB_H + 0.016) * px);
+      c.restore();
+      c.shadowColor = "transparent"; c.globalCompositeOperation = "destination-out";
+      c.fillRect(X(-ACB_OPEN.w / 2), Y(ACB_OPEN.h / 2), ACB_OPEN.w * px, ACB_OPEN.h * px);
+    }) });
+  plane(g, SH.w, SH.h, shadow, SH.x, SH.y, 0.0008).castShadow = false;
+
   // Moving part: everything below racks out together
   const b = new THREE.Group(); g.add(b);
-  box(b, ACB_W, ACB_H, ACB_D, ACB.body, 0, 0, ACB_Z - ACB_D / 2, 0.006);
+  // Front fascia, then the narrower moulded case behind it
+  const fd = 0.045, bz = ACB_Z - fd;
+  box(b, ACB_W, ACB_H, fd, ACB.body, 0, 0, ACB_Z - fd / 2, 0.006);
   plane(b, ACB_W - 0.008, ACB_H - 0.008, ACB.face, 0, 0, ACB_Z + 0.0003);
-  // Arc chute vents across the roof, seen once the breaker is drawn out
-  for (let i = 0; i < 7; i++) box(b, ACB_W - 0.06, 0.001, 0.008, M.gap, 0, ACB_H / 2 + 0.0004, -0.02 - i * 0.02);
+  box(b, ACB_CASE.w, ACB_CASE.h, ACB_CASE.d, ACB.moulded, 0, ACB_CASE.y, bz - ACB_CASE.d / 2, 0.004);
+  const rearZ = bz - ACB_CASE.d, caseTop = ACB_CASE.y + ACB_CASE.h / 2;
+
+  // Arc chutes on the roof, one per pole, with their vent slots
+  ACB_POLES.forEach((px) => {
+    box(b, 0.072, 0.034, 0.16, ACB.chute, px, caseTop + 0.017, bz - 0.02 - 0.08, 0.003);
+    for (let i = 0; i < 9; i++) box(b, 0.05, 0.001, 0.006, M.gap, px, caseTop + 0.0345, bz - 0.04 - i * 0.015);
+  });
+  // Sliding secondary contacts behind the chutes: the control wiring disconnects as the breaker racks out
+  box(b, 0.2, 0.022, 0.03, ACB.cradleBlack, 0, caseTop + 0.011, rearZ + 0.02, 0.002);
+  for (let i = 0; i < 16; i++) box(b, 0.006, 0.003, 0.02, ACB.contact, -0.1 + i * 0.0133, caseTop + 0.0225, rearZ + 0.02, 0.0006);
+
+  // Steel side plates with lifting holes and the racking rollers that ride the extension rails
+  const sideX = ACB_CASE.w / 2 + 0.0015;
+  const plateTop = 0.12, plateBot = ACB_RAIL.y + ACB_RAIL.h / 2, plateD = ACB_CASE.d - 0.02;
+  for (const sx of [-1, 1]) {
+    box(b, 0.003, plateTop - plateBot, plateD, ACB.plate, sx * sideX, (plateTop + plateBot) / 2, bz - 0.01 - plateD / 2, 0.001);
+    for (const hz of [bz - 0.05, rearZ + 0.05]) {
+      const h = add(b, new THREE.CircleGeometry(0.011, 32), ACB.hole, sx * (sideX + 0.0016), 0.085, hz);
+      h.rotation.y = sx * Math.PI / 2; h.castShadow = false;
+    }
+    for (const rz of [bz - 0.04, rearZ + 0.035]) {
+      const r = add(b, new THREE.CylinderGeometry(0.009, 0.009, 0.012, 32), ACB.screw, sx * (sideX + 0.006), plateBot + 0.012, rz);
+      r.rotation.z = Math.PI / 2;
+    }
+    // Telescopic extension rail: long enough that its tail stays inside the cradle at full draw-out
+    const rl = ACB_TRAVEL + ACB_CD - 0.02;
+    box(b, ACB_RAIL.w, ACB_RAIL.h, rl, ACB.rail, sx * ACB_RAIL.x, ACB_RAIL.y, bz - rl / 2, 0.001);
+    box(b, 0.0006, ACB_RAIL.h * 0.45, rl - 0.01, M.gap, sx * (ACB_RAIL.x + ACB_RAIL.w / 2 + 0.0003), ACB_RAIL.y, bz - rl / 2);
+  }
+
+  // Rear: line (top) and load (bottom) terminals of each pole, a copper spud through an insulating
+  // boss, ending in a disconnecting contact cluster of silver-plated fingers held by garter springs
+  [0.08, -0.1].forEach((ty) => ACB_POLES.forEach((px) => {
+    box(b, 0.06, 0.05, 0.016, ACB.moulded, px, ty, rearZ - 0.008, 0.003);
+    box(b, 0.034, 0.012, 0.05, ACB.copper, px, ty, rearZ - 0.016 - 0.025, 0.001);
+    for (let i = 0; i < 6; i++) box(b, 0.0042, 0.032, 0.03, ACB.silver, px + (i - 2.5) * 0.0058, ty, rearZ - 0.05, 0.0008);
+    for (const bzz of [rearZ - 0.042, rearZ - 0.058]) box(b, 0.04, 0.036, 0.0025, ACB.spring, px, ty, bzz, 0.0008);
+  }));
 
   // Trip unit: raised black module with a colour touchscreen
   const tu = new THREE.Group(); tu.position.set(ACB_TU.x, ACB_TU.y, ACB_Z); b.add(tu);
@@ -1362,10 +1689,11 @@ function acbBreaker(p, x, y) {
   box(tu, 0.03, 0.012, 0.002, M.black, 0, -0.092, tz + 0.001, 0.0008);
 
   // Mechanism column: flag windows, O / I pushbuttons, trip-reset button
-  [[0.12, ACB.closed], [0.09, ACB.charged]].forEach(([fy, mat]) => {
+  const flags = [[0.12, ACB.closed], [0.09, ACB.charged]].map(([fy, mat]) => {
     box(b, 0.04, 0.02, 0.0015, MTRM.window, ACB_MX, fy, ACB_Z + 0.00075, 0.001);
-    plane(b, 0.034, 0.0145, mat, ACB_MX, fy, ACB_Z + 0.0017);
+    const f = plane(b, 0.034, 0.0145, mat, ACB_MX, fy, ACB_Z + 0.0017);
     plane(b, 0.038, 0.018, MTRM.glass, ACB_MX, fy, ACB_Z + 0.0022);
+    return f;
   });
   [[0.045, ACB.off, ACB.capO], [-0.008, ACB.on, ACB.capI]].forEach(([by, mat, cap]) => {
     add(b, acbCollarGeo, M.black, ACB_MX, by, ACB_Z);
@@ -1388,14 +1716,22 @@ function acbBreaker(p, x, y) {
   add(b, acbKeyGeo, MCCB.tab, -0.078, ry, rz);
   box(b, 0.0016, 0.009, 0.0006, ACB.hole, -0.078, ry, rz + 0.0049);
   box(b, 0.062, 0.022, 0.0015, MTRM.window, 0.015, ry, rz + 0.00075, 0.001);
-  plane(b, 0.056, 0.017, ACB.position, 0.015, ry, rz + 0.0017);
+  const pos = plane(b, 0.056, 0.017, ACB.position, 0.015, ry, rz + 0.0017);
   plane(b, 0.06, 0.02, MTRM.glass, 0.015, ry, rz + 0.0022);
   add(b, acbCollarGeo, M.black, 0.075, ry, rz);
   const sock = add(b, new THREE.CircleGeometry(0.0118, 64), ACB.hole, 0.075, ry, rz + 0.0009); sock.castShadow = false;
   const hex = add(b, new THREE.CircleGeometry(0.0055, 6), MCCB.tab, 0.075, ry, rz + 0.0012); hex.castShadow = false;
   add(b, acbCollarGeo, M.black, 0.119, ry, rz).scale.setScalar(0.55);
   add(b, acbCapGeo, MTRM.key, 0.119, ry, rz).scale.setScalar(0.55);
+  b.userData = { closed: flags[0], pos, shadow };
   return b;
+}
+// Racked in the breaker shows closed and connected; any travel out means it was tripped open first
+function acbState(b, t) {
+  const out = t > 0.01;
+  b.userData.shadow.opacity = t;
+  b.userData.closed.material = out ? ACB.open : ACB.closed;
+  b.userData.pos.material = out ? ACB.disc : ACB.position;
 }
 
 /* ---------- 40 mm mushroom-head emergency stop (22 mm mounting, twist to release) ---------- */
@@ -1474,6 +1810,268 @@ function eStop(p, x, y) {
   return g;
 }
 
+/* ---------- Withdrawable motor starter tray (the module that slides out on the tour) ---------- */
+// An open zinc-plated tray on telescopic rails, laid out behind the controls on its door: the rotary
+// handle's square shaft runs straight back into a 3-pole MCCB standing behind it, and the relay HMI is
+// cabled to its base unit. Power wiring keeps the busbar phase colours from the rear stabs through the
+// breaker, the contactor and the current sensor; control gear sits on a DIN rail on the right, wired
+// through slotted trunking. Door space: origin at the door's bottom-left corner, inside face at z = 0.
+const DRAWER_TRAVEL = 0.38, TRAY_D = 0.49, TRAY_Y = 0.0135; // TRAY_Y: top of the tray floor
+// The tray darkens as it runs back into the carcass mouth
+const trayShade = (m) => chamberShade(m, 0.52, 0.2);
+const moulded = (color, roughness = .55) =>
+  trayShade(new THREE.MeshPhysicalMaterial({ color, roughness, clearcoat: .15, clearcoatRoughness: .5 }));
+const printed = (w, h, draw) => trayShade(std(0xffffff, .6, 0, { map: canvasTex(w, h, draw), ...DECAL }));
+const ductTex = canvasTex(64, 64, (g, s) => {
+  g.fillStyle = "#8C9195"; g.fillRect(0, 0, s, s);
+  g.fillStyle = "#2B2E30"; g.fillRect(s * 0.36, 0, s * 0.28, s * 0.78); // finger slot, open at the top
+});
+ductTex.wrapS = THREE.RepeatWrapping;
+const TRAY = {
+  zinc: trayShade(std(0xA3A8AC, .48, .75)),
+  side: trayShade(paint(.46)),
+  rail: trayShade(std(0xC4C7CA, .3, .9)),
+  shaft: trayShade(std(0xB5B9BD, .32, .9)),
+  screw: trayShade(std(0xB0B4B8, .3, 1)),
+  black: moulded(0x1C1E21),
+  anthracite: moulded(0x33373B, .5),
+  light: moulded(0xDEDFDB, .5),
+  terminal: moulded(0x8D9297, .6),
+  blue: moulded(0x2F5DA8, .55),
+  green: moulded(0x2E8B47, .5),
+  yellow: moulded(0xD9B21E, .5),
+  hole: trayShade(std(0x0B0C0D, .9, 0)),
+  core: trayShade(std(0x55595D, .45, .7)),
+  coil: moulded(0xC99A3A, .45),
+  ductLid: moulded(0x8C9195, .65),
+  // Insulation: phase colours as on the busbar sleeves, black and grey for control wiring
+  wire: [0xB3261E, 0xD9A81A, 0x1F4FA8].map((c) => trayShade(std(c, .45, 0))),
+  ctlBlack: trayShade(std(0x222426, .45, 0)),
+  ctlGrey: trayShade(std(0x8A8F93, .5, 0)),
+  mccbLabel: printed(256, 200, (g, w, h) => {
+    g.fillStyle = "#EDEDEA"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#17181A"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 64px Arial, Helvetica, sans-serif"; g.fillText("32 A", w / 2, 62);
+    g.font = "700 26px Arial, Helvetica, sans-serif"; g.fillText("Ue 415 V   Icu 36 kA", w / 2, 128);
+    g.fillStyle = "#C4262B"; g.fillRect(0, h - 36, w, 36);
+    g.fillStyle = "#fff"; g.font = "700 22px Arial, Helvetica, sans-serif"; g.fillText("3P  MCCB", w / 2, h - 18);
+  }),
+  // Contactor face, seen from above: canvas top is the back of the tray
+  contactor: printed(128, 256, (g, w, h) => {
+    g.fillStyle = "#1C1E21"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#EDEDEA"; g.fillRect(14, 88, w - 28, 80);
+    g.fillStyle = "#17181A"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 30px Arial, Helvetica, sans-serif"; g.fillText("18 A", w / 2, 114);
+    g.font = "700 18px Arial, Helvetica, sans-serif"; g.fillText("AC-3  415 V", w / 2, 146);
+    g.fillStyle = "#AEB4BA"; g.font = "700 16px Arial, Helvetica, sans-serif";
+    g.fillText("2/T1  4/T2  6/T3", w / 2, 16); g.fillText("1/L1  3/L2  5/L3", w / 2, h - 16);
+    g.fillText("A1        A2", w / 2, 196);
+  }),
+  // Relay base unit: the same anthracite and small print as the HMI on the door
+  mprBase: printed(128, 256, (g, w, h) => {
+    g.fillStyle = "#26292C"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#AEB4BA"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 20px Arial, Helvetica, sans-serif"; g.fillText("MPR-72", w / 2, 96);
+    g.fillStyle = "#6F767D"; g.font = "700 15px Arial, Helvetica, sans-serif"; g.fillText("BASE UNIT", w / 2, 120);
+    g.textAlign = "left";
+    ["RUN", "ALM", "TRIP"].forEach((t, i) => g.fillText(t, 50, 146 + i * 20));
+  }),
+  sensor: printed(128, 64, (g, w, h) => {
+    g.fillStyle = "#26292C"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#AEB4BA"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 18px Arial, Helvetica, sans-serif"; g.fillText("CT  0.8–32 A", w / 2, h / 2);
+  }),
+  xfmr: printed(160, 64, (g, w, h) => {
+    g.fillStyle = "#EDEDEA"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#17181A"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 20px Arial, Helvetica, sans-serif"; g.fillText("100 VA", w / 2, 20);
+    g.font = "700 15px Arial, Helvetica, sans-serif"; g.fillText("415 / 230 V", w / 2, 44);
+  }),
+  markers: printed(512, 48, (g, w, h) => {
+    g.fillStyle = "#F2F2EE"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#17181A"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = "700 26px Arial, Helvetica, sans-serif";
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "N", "PE"].forEach((t, i) => g.fillText(t, (i + 0.5) * w / 12, h / 2 + 2));
+  }),
+};
+// Plain y-axis cylinder (screw heads and the like, seen from above)
+function vcyl(p, r, h, mat, x, y, z, seg = 20) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
+  m.position.set(x, y + h / 2, z);
+  m.castShadow = m.receiveShadow = true;
+  p.add(m);
+  return m;
+}
+// A face-up label on top of a part
+function topLabel(p, w, d, mat, x, y, z) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+  m.rotation.x = -Math.PI / 2; m.position.set(x, y + 0.0003, z);
+  m.receiveShadow = true; p.add(m);
+  return m;
+}
+function wire(p, mat, r, pts) {
+  const curve = new THREE.CatmullRomCurve3(pts.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, r, 10), mat);
+  m.castShadow = m.receiveShadow = true;
+  p.add(m);
+}
+// Slotted PVC trunking with its lid: len runs along x (along = "x") or z
+function duct(p, along, len, x, z) {
+  const t = ductTex.clone(); t.repeat.set(len / 0.0125, 1); t.needsUpdate = true;
+  const mat = trayShade(std(0xffffff, .65, 0, { map: t }));
+  const W = 0.026, H = 0.045;
+  const [w, d] = along === "x" ? [len, W] : [W, len];
+  // The slotted sides map u along the run for a z-running duct; rotate the geometry for x runs
+  const geo = new THREE.BoxGeometry(W, H, len);
+  if (along === "x") geo.rotateY(Math.PI / 2);
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, TRAY_Y + H / 2, z);
+  m.castShadow = m.receiveShadow = true; p.add(m);
+  box(p, w + 0.002, 0.004, d + 0.003, TRAY.ductLid, x, TRAY_Y + H + 0.002, z, 0.001);
+  return TRAY_Y + H;
+}
+function starterTray(p, dw, dh) {
+  const cx = dw / 2, zc = -0.008 - TRAY_D / 2, inner = dw - 0.03;
+  // Tray: floor, low folded side walls, a rear bulkhead, telescopic rails outside each wall
+  box(p, inner, 0.003, TRAY_D, TRAY.zinc, cx, TRAY_Y - 0.0015, zc);
+  for (const s of [-1, 1]) {
+    const x = cx + s * (inner / 2 - 0.0015);
+    box(p, 0.003, 0.06, TRAY_D, TRAY.side, x, TRAY_Y + 0.03, zc, 0.001);
+    box(p, 0.014, 0.003, TRAY_D, TRAY.side, x - s * 0.0055, TRAY_Y + 0.0585, zc, 0.001);
+    box(p, 0.008, 0.028, TRAY_D - 0.03, TRAY.rail, cx + s * (inner / 2 + 0.0045), TRAY_Y + 0.03, zc - 0.015, 0.001);
+    box(p, 0.003, 0.012, TRAY_D - 0.06, TRAY.zinc, cx + s * (inner / 2 + 0.0085), TRAY_Y + 0.03, zc - 0.03);
+  }
+  box(p, inner, dh - 0.03, 0.003, TRAY.zinc, cx, TRAY_Y + (dh - 0.03) / 2, -0.008 - TRAY_D);
+
+  // Power circuit, lined up behind the door handle at x = 0.14
+  const hx = 0.14, hy = dh / 2, ph = [-0.022, 0, 0.022];
+  // Handle adaptor on the back of the door, and the square shaft back to the breaker
+  cyl(p, 0.019, 0.012, TRAY.black, hx, hy, -0.012);
+  const mz = -0.105; // MCCB front face
+  box(p, 0.008, 0.008, -mz - 0.012 - 0.014, TRAY.shaft, hx, hy, (mz + 0.014 - 0.012) / 2);
+  // 3-pole MCCB standing on a zinc pedestal, its rotary mechanism facing the door
+  box(p, 0.08, 0.022, 0.07, TRAY.zinc, hx, TRAY_Y + 0.011, mz - 0.035, 0.001);
+  const mb = TRAY_Y + 0.022, mh = 0.13, mt = mb + mh;
+  box(p, 0.075, mh, 0.07, TRAY.black, hx, mb + mh / 2, mz - 0.035, 0.004);
+  box(p, 0.058, 0.068, 0.008, TRAY.black, hx, hy, mz + 0.004, 0.003);
+  const mech = new THREE.Mesh(lathe([[0.023, 0], [0.023, 0.003], [0.021, 0.005], [0.011, 0.006], [0, 0.006]], 64), MCCB.disc);
+  mech.position.set(hx, hy, mz + 0.008); mech.castShadow = true; p.add(mech);
+  box(p, 0.016, 0.016, 0.012, TRAY.black, hx, hy, mz + 0.02, 0.002);
+  box(p, 0.003, 0.016, 0.001, M.label, hx + 0.013, hy, mz + 0.0142);
+  cyl(p, 0.0038, 0.004, M.red, hx + 0.026, mb + 0.014, mz);
+  topLabel(p, 0.052, 0.04, TRAY.mccbLabel, hx, mt, mz - 0.042);
+  // Line terminals along the top front edge, load studs out of the back
+  ph.forEach((o) => vcyl(p, 0.0042, 0.002, TRAY.screw, hx + o, mt, mz - 0.012));
+
+  // Contactor on a DIN rail behind the breaker, face up
+  const rail = (x0, x1, z) => box(p, x1 - x0, 0.0075, 0.035, TRAY.zinc, (x0 + x1) / 2, TRAY_Y + 0.00375, z, 0.0005);
+  const kz = -0.235, kb = TRAY_Y + 0.0075, kt = kb + 0.08;
+  rail(0.05, 0.23, kz);
+  box(p, 0.045, 0.08, 0.09, TRAY.black, hx, kb + 0.04, kz, 0.003);
+  box(p, 0.034, 0.006, 0.05, TRAY.black, hx, kt + 0.003, kz, 0.002);
+  topLabel(p, 0.034, 0.05, TRAY.contactor, hx, kt + 0.006, kz);
+  ph.forEach((o) => [-0.036, 0.036].forEach((dz) => vcyl(p, 0.0032, 0.0015, TRAY.screw, hx + o * 0.7, kt, kz + dz)));
+  // Current sensor for the relay: the three phases pass through it
+  const sz = -0.32, sh = 0.036;
+  box(p, 0.074, sh, 0.04, TRAY.anthracite, hx, TRAY_Y + sh / 2, sz, 0.003);
+  topLabel(p, 0.05, 0.025, TRAY.sensor, hx, TRAY_Y + sh, sz);
+  const wy = TRAY_Y + sh / 2;
+  ph.forEach((o) => cyl(p, 0.0058, 0.001, TRAY.hole, hx + o, wy, sz + 0.02));
+  // Incoming stab housing at the back: silver fingers reach through the bulkhead onto the vertical bus
+  const bz = -0.44;
+  box(p, 0.12, 0.09, 0.04, TRAY.black, hx, TRAY_Y + 0.045, bz, 0.004);
+  ph.forEach((o) => box(p, 0.012, 0.03, 0.03, ACB.silver, hx + o * 1.8, TRAY_Y + 0.06, -0.008 - TRAY_D - 0.013, 0.002));
+
+  // Power wiring, one run per phase
+  ph.forEach((o, i) => {
+    const x = hx + o, mat = TRAY.wire[i], r = 0.0032;
+    // Stabs up over the contactor to the breaker's line terminals
+    const ry = mt + 0.008 - i * 0.002;
+    wire(p, mat, r, [[x, TRAY_Y + 0.08, bz + 0.02], [x, TRAY_Y + 0.1, bz + 0.035], [x, ry, -0.37], [x, ry, -0.2],
+      [x, ry, mz - 0.03], [x, mt + 0.002, mz - 0.012]]);
+    // Breaker load studs down to the contactor's line terminals
+    const kx = hx + o * 0.7;
+    wire(p, mat, r, [[x, mb + 0.04, mz - 0.07], [x, mb + 0.05, -0.19], [kx, kt + 0.012, kz + 0.05], [kx, kt + 0.002, kz + 0.036]]);
+    // Contactor load terminals back through the sensor and into the outgoing plug
+    wire(p, mat, r, [[kx, kt + 0.002, kz - 0.036], [kx, kt + 0.014, kz - 0.05], [x, wy + 0.012, sz + 0.05],
+      [x, wy, sz + 0.02], [x, wy, sz - 0.02], [x, wy - 0.002, bz + 0.03], [x, wy - 0.002, bz + 0.02]]);
+  });
+
+  // Control side, behind the relay HMI: trunking down the middle and across the back
+  const dx = 0.255, backZ = -0.375;
+  const top = duct(p, "z", 0.36, dx, -0.195);
+  const bx0 = dx + 0.013, bx1 = dw - 0.017; // from the centre trunking to the right-hand wall
+  duct(p, "x", bx1 - bx0, (bx0 + bx1) / 2, backZ);
+  // Rear of the HMI through the door, with its patch cable dropping to the base unit
+  const rx = 0.295;
+  box(p, 0.066, 0.042, 0.026, TRAY.black, rx, hy, -0.013, 0.002);
+  const bx = 0.312, bzc = -0.2, bb = TRAY_Y + 0.0075, bt = bb + 0.062;
+  wire(p, TRAY.ctlGrey, 0.0025, [[rx + 0.02, hy - 0.012, -0.026], [rx + 0.02, hy - 0.03, -0.06], [bx, bt + 0.05, -0.13],
+    [bx, bt + 0.02, bzc + 0.03], [bx, bt + 0.004, bzc + 0.024]]);
+  rail(0.272, dw - 0.02, bzc);
+  // Relay base unit: anthracite like the HMI, green plug-in terminal blocks at each end
+  box(p, 0.045, 0.062, 0.09, TRAY.anthracite, bx, bb + 0.031, bzc, 0.003);
+  topLabel(p, 0.04, 0.08, TRAY.mprBase, bx, bt, bzc);
+  box(p, 0.009, 0.006, 0.008, TRAY.black, bx, bt + 0.003, bzc + 0.024, 0.001); // RJ45 socket
+  [["g", -0.004], ["y", -0.0118], ["r", -0.0196]].forEach(([c, dz]) => {
+    const l = new THREE.Mesh(new THREE.SphereGeometry(0.0018, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), LENS[c].off);
+    l.position.set(bx - 0.012, bt, bzc + dz); p.add(l);
+  });
+  for (const dz of [-0.039, 0.039]) {
+    box(p, 0.04, 0.012, 0.012, TRAY.green, bx, bt + 0.006, bzc + dz, 0.0015);
+    for (let k = 0; k < 5; k++) vcyl(p, 0.0017, 0.001, TRAY.screw, bx - 0.016 + k * 0.008, bt + 0.012, bzc + dz, 12);
+  }
+  // Two control MCBs: light grey bodies, black toggles with a red ON flag
+  for (let k = 0; k < 2; k++) {
+    const x = 0.346 + k * 0.0185;
+    box(p, 0.0175, 0.06, 0.085, TRAY.light, x, bb + 0.03, bzc, 0.002);
+    box(p, 0.0175, 0.012, 0.045, TRAY.light, x, bb + 0.066, bzc, 0.002);
+    box(p, 0.009, 0.008, 0.012, TRAY.black, x, bb + 0.074, bzc + 0.004, 0.0015);
+    box(p, 0.009, 0.0005, 0.005, M.red, x, bb + 0.0722, bzc - 0.006);
+    for (const dz of [-0.034, 0.034]) vcyl(p, 0.0025, 0.001, TRAY.screw, x, bb + 0.06, bzc + dz, 12);
+  }
+  // Terminal strip: ten grey feed-through blocks, a blue neutral, a green/yellow earth, end stop
+  const tw = 0.0062, tx0 = 0.385, th = 0.045, tt = bb + th;
+  for (let k = 0; k < 12; k++) {
+    const x = tx0 + k * tw + tw / 2, mat = k === 10 ? TRAY.blue : k === 11 ? TRAY.green : TRAY.terminal;
+    box(p, tw - 0.0003, th, 0.05, mat, x, bb + th / 2, bzc, 0.0008);
+    if (k === 11) box(p, tw - 0.0002, 0.006, 0.05, TRAY.yellow, x, bb + th * 0.62, bzc);
+    for (const dz of [-0.017, 0.017]) vcyl(p, 0.0019, 0.001, TRAY.hole, x, tt, bzc + dz, 12);
+  }
+  box(p, 0.006, th + 0.004, 0.05, TRAY.black, tx0 + 12 * tw + 0.004, bb + (th + 0.004) / 2, bzc, 0.001);
+  topLabel(p, 12 * tw, 0.008, TRAY.markers, tx0 + 6 * tw, tt, bzc);
+  // Control transformer on the tray floor, front right
+  const xx = 0.46, xz = -0.085;
+  box(p, 0.09, 0.006, 0.06, TRAY.zinc, xx, TRAY_Y + 0.003, xz, 0.001);
+  box(p, 0.072, 0.058, 0.03, TRAY.core, xx, TRAY_Y + 0.006 + 0.029, xz, 0.002);
+  box(p, 0.044, 0.05, 0.05, TRAY.coil, xx, TRAY_Y + 0.006 + 0.027, xz, 0.004);
+  const xt = TRAY_Y + 0.064;
+  box(p, 0.056, 0.008, 0.012, TRAY.black, xx, xt + 0.004, xz - 0.022, 0.0015);
+  for (let k = 0; k < 4; k++) vcyl(p, 0.002, 0.001, TRAY.screw, xx - 0.021 + k * 0.014, xt + 0.008, xz - 0.022, 12);
+  topLabel(p, 0.04, 0.016, TRAY.xfmr, xx, TRAY_Y + 0.058, xz + 0.004);
+
+  // Control wiring: terminals into the back trunking, gear into the centre trunking
+  for (let k = 0; k < 10; k++) {
+    const x = tx0 + k * tw + tw / 2, mat = k % 3 === 2 ? TRAY.ctlGrey : TRAY.ctlBlack;
+    wire(p, mat, 0.0013, [[x, tt, bzc - 0.017], [x, tt + 0.012, bzc - 0.04], [x, top + 0.02, backZ + 0.045], [x, top + 0.006, backZ + 0.013]]);
+  }
+  for (let k = 0; k < 5; k++) {
+    const x = bx - 0.016 + k * 0.008;
+    wire(p, TRAY.ctlBlack, 0.0013, [[x, bt + 0.012, bzc - 0.039], [x, bt + 0.018, bzc - 0.06], [x, top + 0.02, backZ + 0.045], [x, top + 0.006, backZ + 0.013]]);
+    wire(p, TRAY.ctlBlack, 0.0013, [[x, bt + 0.012, bzc + 0.039], [x, bt + 0.016, bzc + 0.052], [x - 0.02 - k * 0.004, top + 0.01, bzc + 0.06 - k * 0.006],
+      [dx + 0.013 + 0.002, top - 0.012 - k * 0.004, bzc + 0.06 - k * 0.006]]);
+  }
+  for (let k = 0; k < 2; k++) {
+    const x = 0.346 + k * 0.0185;
+    wire(p, TRAY.ctlBlack, 0.0013, [[x, bb + 0.06, bzc + 0.034], [x, bb + 0.066, bzc + 0.06], [x - 0.04, top + 0.01, bzc + 0.08 + k * 0.006],
+      [dx + 0.015, top - 0.03, bzc + 0.08 + k * 0.006]]);
+  }
+  // Contactor coil into the left side of the centre trunking
+  [0.004, -0.006].forEach((dz, k) => wire(p, TRAY.ctlBlack, 0.0013, [[hx + 0.012 - k * 0.024, kt + 0.006, kz - 0.011 + dz],
+    [hx + 0.03, kt + 0.012, kz - 0.011 + dz], [dx - 0.03, top + 0.008, kz - 0.011 + dz], [dx - 0.015, top - 0.01, kz - 0.011 + dz]]));
+  // Transformer secondary back to the terminal strip's front row
+  [0, 1].forEach((k) => wire(p, TRAY.ctlGrey, 0.0013, [[xx + 0.007 + k * 0.014, xt + 0.009, xz - 0.022], [xx + 0.007 + k * 0.014, xt + 0.02, xz - 0.04],
+    [tx0 + (8 + k) * tw + tw / 2, tt + 0.016, bzc + 0.04], [tx0 + (8 + k) * tw + tw / 2, tt, bzc + 0.017]]));
+}
+
 /* ---------- The lineup ---------- */
 const sections = [
   { w: 1.0, type: "incomer" },
@@ -1498,14 +2096,22 @@ sections.forEach((sec, si) => {
   const y0 = PL;
 
   // Carcass: solid lower body, recessed busbar chamber, black plinth and roof
-  box(g, w - 0.002, BH - CH, D, M.body, cx, y0 + (BH - CH) / 2, 0, 0.003);
-  box(g, w - 0.002, CH, 0.08, M.interior, cx, y0 + BH - CH / 2, -D / 2 + 0.04);
+  if (sec.type === "incomer") {
+    // Pocket for the ACB cradle: the front of the body is open behind the door cut-out
+    const rd = D - ACB_CD, yc = y0 + (BH - CH) / 2;
+    box(g, w - 0.002, BH - CH, rd, M.body, cx, yc, -D / 2 + rd / 2, 0.003);
+    holedSlab(g, w - 0.002, BH - CH, ACB_CD, M.body, cx, yc, FZ - ACB_CD / 2,
+      { x: 0, y: y0 + 0.4 + G + ACB_DOOR_Y - yc, ...ACB_OPEN });
+  } else box(g, w - 0.002, BH - CH, D, M.body, cx, y0 + (BH - CH) / 2, 0, 0.003);
+  box(g, w - 0.002, CH, 0.08, M.cavity, cx, y0 + BH - CH / 2, -D / 2 + 0.04);
+  // Chamber floor and roof lining, back wall to just behind the cover
+  [0.002, CH - 0.002].forEach((dy) => box(g, w - 0.002, 0.004, FZ + 0.315, M.cavity, cx, y0 + BH - CH + dy, (FZ - 0.005 - 0.32) / 2));
   box(g, w, PL, D, M.frame, cx, PL / 2, 0, 0.003);
   box(g, w, 0.045, D + 0.02, M.frame, cx, y0 + BH + 0.0225, 0, 0.003);
   box(g, 0.012, BH, 0.006, M.frame, L, y0 + BH / 2, FZ + 0.003, 0.0015);
 
-  // Busbar support insulator inside the chamber
-  box(g, 0.04, 0.27, 0.08, M.support, cx, y0 + BH - CH / 2, -0.15, 0.004);
+  // Slotted DMC busbar support on the chamber floor, running front to back under the bars
+  box(g, 0.03, BUS_Y + 0.02, BUS_Z0 + 0.335, M.support, cx, y0 + BH - CH + (BUS_Y + 0.02) / 2, (BUS_Z0 + 0.015 - 0.32) / 2, 0.004);
 
   // Busbar chamber cover (opens during the tour)
   const top = door(g, L, y0 + BH - CH, w, CH);
@@ -1522,7 +2128,7 @@ sections.forEach((sec, si) => {
   if (sec.type === "incomer") {
     const bot = door(g, L, y0, w, 0.4);
     vent(bot, bot.userData.dw / 2, 0.2, 0.62, 0.18);
-    const main = door(g, L, y0 + 0.4, w, BH - CH - 0.4);
+    const main = door(g, L, y0 + 0.4, w, BH - CH - 0.4, { hole: { x: w / 2 - G, y: ACB_DOOR_Y, ...ACB_OPEN } });
     const mx = main.userData.dw / 2;
     lamps(main, mx, 1.2, PHASE, 0.08);
     [["V", "VOLTAGE"], ["A", "CURRENT"], ["P", "POWER"]].forEach(([k, tag], i) => meter(main, mx + (i - 1) * 0.14, 1.05, k, tag));
@@ -1530,7 +2136,7 @@ sections.forEach((sec, si) => {
     cyl(main, 0.012, 0.01, M.plate, mx, 0.81, T);
 
     // ACB in its door cut-out; the breaker body racks out on the tour
-    acbBody = acbBreaker(main, mx, 0.5);
+    acbBody = acbBreaker(main, mx, ACB_DOOR_Y);
 
     eStop(main, mx, 0.16);
 
@@ -1550,7 +2156,7 @@ sections.forEach((sec, si) => {
     selector(upper, dw / 2, 0.12, si !== 3 ? "R" : "OFF");
     if (si === 1) anchors.feeder = [upper, dw / 2, 0.42, T + 0.05];
     // On the closed cover's face; the frame loop sinks it onto the bars as the covers open
-    if (si === 2) anchors.busbar = [g, cx - w * 0.15, y0 + BH - CH / 2, FZ + T + 0.01];
+    if (si === 2) anchors.busbar = [g, cx - w * 0.15, y0 + BH - CH + BUS_Y + BAR_H / 2, FZ + T + 0.01];
   }
 
   if (sec.type === "mcc") {
@@ -1560,9 +2166,11 @@ sections.forEach((sec, si) => {
     for (let i = 0; i < n; i++) {
       const y = y0 + 0.25 + i * mh;
       box(g, w - 0.012, mh - 0.012, 0.002, M.black, cx, y + mh / 2, FZ + 0.0005);
-      const mod = door(g, L, y, w, mh);
+      const mod = door(g, L, y, w, mh, { slide: true });
       const { dw, dh } = mod.userData;
-      box(mod, dw - 0.03, dh - 0.03, 0.5, M.body, dw / 2, dh / 2, -0.25);
+      // Only the module that slides out on the tour is fitted out; the rest never show their insides
+      if (i === 3) starterTray(mod, dw, dh);
+      else box(mod, dw - 0.03, dh - 0.03, 0.5, M.body, dw / 2, dh / 2, -0.25);
       rotaryHandle(mod, 0.14, dh / 2);
       starterRelay(mod, 0.295, dh / 2, n - i);
       if (i === 3) { drawer = mod; drawer.userData.z0 = mod.position.z; anchors.mcc = [mod, 0.14, dh / 2, T + 0.05]; }
@@ -1586,10 +2194,42 @@ sections.forEach((sec, si) => {
 });
 
 // End panels and the busbars running the length of the lineup
-[-total / 2 - 0.01, total / 2 + 0.01].forEach((x) => box(root, 0.02, BH + 0.045, D + 0.02, M.body, x, PL + (BH + 0.045) / 2, 0, 0.004));
-// Four flat bars (L1, L2, L3, N) stacked face-forward so they read from the front
-[0.05, 0.115, 0.18, 0.245].forEach((dy) =>
-  box(root, total - 0.02, 0.045, 0.012, M.copper, 0, PL + BH - CH + dy, -0.1, 0.002));
+[-total / 2 - 0.01, total / 2 + 0.01].forEach((x) => {
+  box(root, 0.02, BH + 0.045, D + 0.02, M.body, x, PL + (BH + 0.045) / 2, 0, 0.004);
+  box(root, 0.002, CH, FZ + 0.315, M.cavity, x - Math.sign(x) * 0.011, PL + BH - CH / 2, (FZ - 0.005 - 0.32) / 2);
+});
+// Aluminium main busbars, phases arranged R-Y-B-N from front to back on a 90 mm pitch, low in the
+// chamber. Each phase is two flats set on edge (8 mm air gap between them for cooling); the neutral is
+// half size, one flat. Bars are sleeved in phase-coloured heat-shrink, left bare only at the bolted
+// fishplate joints between sections.
+const sleeve = (c) => chamberShade(std(c, .42, 0, { envMapIntensity: .35 }));
+const phases = [
+  { n: 2, mat: sleeve(0xB3261E) },
+  { n: 2, mat: sleeve(0xD9A81A) },
+  { n: 2, mat: sleeve(0x1F4FA8) },
+  { n: 1, mat: chamberShade(std(0x2B2D30, .3, 0, { envMapIntensity: .35 })) },
+];
+const joints = [];
+for (let i = 0, x = -total / 2; i < sections.length - 1; i++) joints.push(x += sections[i].w);
+const xs = [-total / 2 + 0.01, ...joints, total / 2 - 0.01], BARE = 0.06;
+phases.forEach(({ n, mat }, p) => {
+  const y = PL + BH - CH + BUS_Y + BAR_H / 2;
+  const front = BUS_Z0 - p * BUS_PITCH - SLV - BAR_T / 2; // centre of this phase's front flat
+  for (let k = 0; k < n; k++) {
+    const z = front - k * (BAR_T + BAR_GAP);
+    box(root, total - 0.02, BAR_H, BAR_T, M.alu, 0, y, z, 0.0015);
+    // Sleeve each section's run, stopping short of the joints
+    for (let j = 0; j < xs.length - 1; j++) {
+      const a = xs[j] + (j ? BARE : 0), b = xs[j + 1] - (j < xs.length - 2 ? BARE : 0);
+      box(root, b - a, BAR_H + 2 * SLV, BAR_T + 2 * SLV, mat, (a + b) / 2, y, z, 0.002);
+    }
+  }
+  // Fishplate splice across each joint on the phase's front face, two hex bolts either side
+  joints.forEach((x) => {
+    box(root, 0.1, BAR_H - 0.006, 0.006, M.alu, x, y, front + BAR_T / 2 + 0.003, 0.001);
+    [-0.03, 0.03].forEach((o) => cyl(root, 0.0075, 0.006, M.bolt, x + o, y, front + BAR_T / 2 + 0.006, 6));
+  });
+});
 
 /* ---------- Floor: white tiles with hairline grout, shadow catcher, contact shadow ---------- */
 // One texture tile covers TILE_REPEAT metres: 4 x 4 tiles of 0.6 m, about 2.3 mm per texel
@@ -1708,24 +2348,18 @@ root.updateMatrixWorld(true);
 
 /* ---------- Tour content ---------- */
 const steps = [
-  { at: "acb", yaw: -0.55, pitch: 0.06, dist: 2.0, title: "Air circuit breaker incomer",
-    body: "The ACB takes supply from your transformer or DG and protects the whole board. It racks out on its drawout chassis for maintenance, without opening the busbar chamber.",
-    spec: "630 A to 6300 A, 50 kA and above" },
-  { at: "meter", yaw: -0.22, pitch: 0.04, dist: 1.7, title: "Metering and indication",
-    body: "Multifunction meters, phase indication lamps and selector switches on the incomer door show voltage, current, power factor and energy at a glance.",
-    spec: "Modbus-ready meters on request" },
-  { at: "busbar", yaw: 0.28, pitch: 0.1, dist: 2.2, title: "Busbar chamber",
-    body: "Copper or aluminium busbars run the full length of the lineup in a segregated top chamber, on insulated supports sized for your short-circuit level.",
-    spec: "Form 2 to Form 4b separation" },
-  { at: "feeder", yaw: -0.28, pitch: 0.05, dist: 1.4, title: "Outgoing feeders",
-    body: "Each feeder has its own lockable door, protection relay and meter, so one circuit can be isolated while the rest stay live.",
-    spec: "MCCB or ACB outgoings" },
-  { at: "mcc", yaw: 0.8, pitch: 0.14, dist: 1.9, title: "Motor starter modules",
-    body: "Compact compartments for DOL and star-delta starters. Each module slides out on its own, so you can swap a starter without shutting down the section.",
-    spec: "Fixed or drawout modules" },
-  { at: "vent", yaw: 0.4, pitch: 0.16, dist: 1.5, title: "Ventilation and finish",
-    body: "Filtered louvres keep internal temperatures in check. The CRCA steel enclosure is powder-coated, RAL 7035 unless you specify otherwise.",
-    spec: "IP42 to IP54 indoor enclosures" },
+  { at: "acb", yaw: -0.95, pitch: 0.16, dist: 1.9, title: "CPRI approved panels with long service life",
+    body: "Designed and tested to meet recognised standards for safety and performance. Robust construction and quality components help reduce premature failures and replacement costs." },
+  { at: "meter", yaw: -0.22, pitch: 0.04, dist: 1.7, title: "Built for industry, customised to your project",
+    body: "Rugged LT panels designed for demanding factory and commercial environments, engineered around your load requirements, electrical scheme and site conditions." },
+  { at: "busbar", yaw: 0.28, pitch: 0.36, dist: 2.2, title: "Enhanced electrical safety",
+    body: "Proper insulation, clearances, protection and panel construction for safer operation." },
+  { at: "feeder", yaw: -0.28, pitch: 0.05, dist: 1.4, title: "Engineered for complex applications",
+    body: "Solutions for DG synchronisation, grid synchronisation, solar integration and other specialised power requirements." },
+  { at: "mcc", yaw: 0.62, pitch: 0.62, dist: 1.25, look: [0.12, -0.05, DRAWER_TRAVEL - 0.16], title: "Easy maintenance and troubleshooting",
+    body: "Neat internal wiring, logical component placement and accessible construction help reduce maintenance time." },
+  { at: "vent", yaw: 0.4, pitch: 0.16, dist: 1.5, title: "Premium finishing and corrosion resistance",
+    body: "In-house fabrication with a 7-tank powder coating process for a durable, professional finish." },
 ];
 
 const spots = steps.map((s, i) => {
@@ -1745,7 +2379,7 @@ const caps = steps.map((s, i) => {
     <div class="caption__step"><span>${i + 1} of ${steps.length}</span><span class="caption__bar"><span style="width:${(i + 1) / steps.length * 100}%"></span></span></div>
     <h2 class="display">${s.title}</h2>
     <p>${s.body}</p>
-    <div class="spec">${s.spec}</div>
+    ${s.spec ? `<div class="spec">${s.spec}</div>` : ""}
     <div class="caption__nav">
       <button type="button" data-go="${i}" ${i === 0 ? "disabled" : ""}>&larr; Previous</button>
       <button type="button" data-go="${i + 2}" ${i === steps.length - 1 ? "disabled" : ""}>Next &rarr;</button>
@@ -1777,7 +2411,7 @@ function layout() {
   const fit = mobile ? Math.max(1, 1.25 / camera.aspect) : 1;
   keys = [
     hero,
-    ...steps.map((s) => ({ t: anchorPos[s.at], yaw: s.yaw, pitch: s.pitch, dist: s.dist * fit, sx: mobile ? 0 : 0.14, sy: mobile ? -0.13 : 0 })),
+    ...steps.map((s) => ({ t: s.look ? anchorPos[s.at].clone().add(new THREE.Vector3(...s.look)) : anchorPos[s.at], yaw: s.yaw, pitch: s.pitch, dist: s.dist * fit, sx: mobile ? 0 : 0.14, sy: mobile ? -0.13 : 0 })),
   ];
   dirty = true;
 }
@@ -1870,9 +2504,10 @@ function frame(time) {
   camera.updateMatrixWorld();
 
   // Moving parts: ACB racks out, busbar covers swing open, a starter module slides out
-  acbBody.position.z = 0.2 * ease(part.acb);
-  topDoors.forEach((d, i) => { d.rotation.y = -1.75 * ease(clamp(part.doors * 1.4 - i * 0.07, 0, 1)); });
-  drawer.position.z = drawer.userData.z0 + 0.32 * ease(part.drawer);
+  acbBody.position.z = ACB_TRAVEL * ease(part.acb);
+  acbState(acbBody, ease(part.acb));
+  topDoors.forEach((d, i) => swing(d, -1.75 * ease(clamp(part.doors * 1.4 - i * 0.07, 0, 1))));
+  drawer.position.z = drawer.userData.z0 + DRAWER_TRAVEL * ease(part.drawer);
 
   // Hero copy recedes while zoomed in
   const h = clamp(part.zoom / 0.6, 0, 1);
@@ -1885,7 +2520,7 @@ function frame(time) {
     v.copy(anchorPos[s.at]);
     if (s.at === "acb") v.z += acbBody.position.z;
     if (s.at === "mcc") v.z += drawer.position.z - drawer.userData.z0;
-    if (s.at === "busbar") v.z -= (FZ + T + 0.104) * ease(part.doors); // lands on the bars' front face (z = -0.094)
+    if (s.at === "busbar") v.z -= (FZ + T + 0.01 - BUS_Z0) * ease(part.doors); // lands on the R phase's front face
     v.project(camera);
     const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
     spots[i].style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
