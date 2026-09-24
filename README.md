@@ -57,6 +57,6 @@ Upload `index.html` and the `assets/` folder to any static host (GitHub Pages, N
 
 ## Before going live
 
-- Canonical URLs, Open Graph tags, JSON-LD and `sitemap.xml` use `https://dheerajtrivedi.github.io/Indway/`. If the site moves to a custom domain, find and replace that base URL across all these files.
+- Canonical URLs, Open Graph tags, JSON-LD, `sitemap.xml` and `robots.txt` use `https://www.indway.in/`. The `CNAME` file points GitHub Pages at `www.indway.in`. If the domain changes, update `CNAME` and find and replace that base URL across all these files.
 - The specifications on the panel pages are typical values; check them against what the factory actually builds.
 
