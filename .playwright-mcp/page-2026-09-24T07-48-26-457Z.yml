@@ -1,0 +1,112 @@
+- generic [active] [ref=f7e1]:
+  - banner [ref=f7e2]:
+    - link "Indway home" [ref=f7e3] [cursor=pointer]:
+      - /url: "#top"
+      - img "Indway" [ref=f7e4]
+    - navigation "Main" [ref=f7e5]:
+      - link "Inside the panel" [ref=f7e6] [cursor=pointer]:
+        - /url: "#inside"
+      - link "Range" [ref=f7e7] [cursor=pointer]:
+        - /url: "#range"
+      - link "How we build" [ref=f7e8] [cursor=pointer]:
+        - /url: "#process"
+      - link "Request a quote" [ref=f7e9] [cursor=pointer]:
+        - /url: "#contact"
+  - main [ref=f7e10]:
+    - region "Indway LT panel" [ref=f7e11]:
+      - generic [ref=f7e12]:
+        - generic:
+          - heading "LT panels built for the load you run." [level=1] [ref=f7e13]
+          - generic [ref=f7e14]:
+            - paragraph [ref=f7e15]: Indway designs and manufactures low-tension switchboards (PCC, MCC, APFC and distribution panels) for plants, commercial buildings and infrastructure. Each panel is wired, tested and documented on our floor before it ships.
+            - generic [ref=f7e16]:
+              - link "Request a quote" [ref=f7e17] [cursor=pointer]:
+                - /url: "#contact"
+              - link "See inside the panel" [ref=f7e18] [cursor=pointer]:
+                - /url: "#inside"
+        - img "Indway LT panel lineup with ACB incomer, metering, outgoing feeders and drawout motor starter modules" [ref=f7e19]
+        - generic "Interactive 3D model of an Indway LT panel lineup" [ref=f7e20]
+    - generic [ref=f7e21]:
+      - generic [ref=f7e22]:
+        - heading "One factory, the full LT range." [level=2] [ref=f7e23]
+        - paragraph [ref=f7e24]: Every lineup starts from your single-line diagram and load list. We size busbars, breakers and enclosures to your fault level, then build to IEC 61439 and IS 8623.
+      - list [ref=f7e25]:
+        - listitem [ref=f7e26]:
+          - heading "Power control centre PCC" [level=3] [ref=f7e27]:
+            - text: Power control centre
+            - generic [ref=f7e28]: PCC
+          - paragraph [ref=f7e29]: Main incoming and distribution from transformer and DG sources, with ACB incomers, bus couplers and interlocking.
+          - generic [ref=f7e30]: Up to 6300 A
+        - listitem [ref=f7e31]:
+          - heading "Motor control centre MCC" [level=3] [ref=f7e32]:
+            - text: Motor control centre
+            - generic [ref=f7e33]: MCC
+          - paragraph [ref=f7e34]: DOL, star-delta, soft starter and VFD feeders in fixed or drawout modules, with remote control and status wiring.
+          - generic [ref=f7e35]: Up to 4000 A
+        - listitem [ref=f7e36]:
+          - heading "Power factor correction APFC" [level=3] [ref=f7e37]:
+            - text: Power factor correction
+            - generic [ref=f7e38]: APFC
+          - paragraph [ref=f7e39]: Automatic capacitor banks with a relay controller, detuned reactors and contactor switching to cut reactive power charges.
+          - generic [ref=f7e40]: 50 to 1000 kVAr
+        - listitem [ref=f7e41]:
+          - heading "Distribution boards MLDB, PDB, SDB" [level=3] [ref=f7e42]:
+            - text: Distribution boards
+            - generic [ref=f7e43]: MLDB, PDB, SDB
+          - paragraph [ref=f7e44]: Main and sub distribution for lighting and power circuits in buildings, hospitals and campuses.
+          - generic [ref=f7e45]: Up to 1600 A
+        - listitem [ref=f7e46]:
+          - heading "AMF and synchronising DG panels" [level=3] [ref=f7e47]:
+            - text: AMF and synchronising
+            - generic [ref=f7e48]: DG panels
+          - paragraph [ref=f7e49]: Automatic mains failure changeover and multi-DG synchronising with load sharing controllers.
+          - generic [ref=f7e50]: Up to 4000 A
+        - listitem [ref=f7e51]:
+          - heading "Feeder pillars Outdoor" [level=3] [ref=f7e52]:
+            - text: Feeder pillars
+            - generic [ref=f7e53]: Outdoor
+          - paragraph [ref=f7e54]: Weatherproof enclosures for street lighting, townships and site distribution.
+          - generic [ref=f7e55]: IP55 enclosure
+    - generic [ref=f7e56]:
+      - generic [ref=f7e57]:
+        - heading "From drawing to commissioning." [level=2] [ref=f7e58]
+        - paragraph [ref=f7e59]: You get approval drawings before we cut steel, and an open invitation to witness the tests before we ship.
+      - list [ref=f7e60]:
+        - listitem [ref=f7e61]:
+          - heading "Review" [level=3] [ref=f7e62]
+          - paragraph [ref=f7e63]: We study your SLD, load list and site conditions, and flag anything that needs a second look.
+        - listitem [ref=f7e64]:
+          - heading "Engineering" [level=3] [ref=f7e65]
+          - paragraph [ref=f7e66]: GA drawings, wiring diagrams and a bill of materials, sent to you for approval.
+        - listitem [ref=f7e67]:
+          - heading "Fabrication" [level=3] [ref=f7e68]
+          - paragraph [ref=f7e69]: CRCA sheet steel is cut, bent, welded and powder-coated in-house.
+        - listitem [ref=f7e70]:
+          - heading "Assembly" [level=3] [ref=f7e71]
+          - paragraph [ref=f7e72]: Busbars, switchgear and control wiring are fitted and ferruled to the approved drawings.
+        - listitem [ref=f7e73]:
+          - heading "Testing" [level=3] [ref=f7e74]
+          - paragraph [ref=f7e75]: High-voltage, insulation resistance and functional tests, with your team welcome to witness.
+        - listitem [ref=f7e76]:
+          - heading "Commissioning" [level=3] [ref=f7e77]
+          - paragraph [ref=f7e78]: Dispatch, installation support and on-site commissioning with a full test report.
+    - generic [ref=f7e79]:
+      - generic [ref=f7e80]:
+        - heading "Send us your single-line diagram." [level=2] [ref=f7e81]
+        - paragraph [ref=f7e82]: We'll come back with a GA drawing, a bill of materials and a price. Most enquiries get a first response within two working days.
+      - generic [ref=f7e83]:
+        - generic [ref=f7e84]:
+          - term [ref=f7e85]: Email
+          - definition [ref=f7e86]:
+            - link "sales@indway.in" [ref=f7e87] [cursor=pointer]:
+              - /url: mailto:sales@indway.in
+        - generic [ref=f7e88]:
+          - term [ref=f7e89]: Phone
+          - definition [ref=f7e90]:
+            - link "+91 00000 00000" [ref=f7e91] [cursor=pointer]:
+              - /url: tel:+910000000000
+        - link "Email your SLD" [ref=f7e92] [cursor=pointer]:
+          - /url: mailto:sales@indway.in?subject=LT%20panel%20enquiry
+  - contentinfo [ref=f7e93]:
+    - img "Indway" [ref=f7e94]
+    - generic [ref=f7e95]: © 2026 Indway. LT panel manufacturer.

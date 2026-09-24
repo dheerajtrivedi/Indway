@@ -1,0 +1,1909 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indway — LT Panel Manufacturer</title>
+<meta name="description" content="Indway designs and builds LT panels: PCC, MCC, APFC, distribution boards, AMF panels and feeder pillars, wired and tested before dispatch.">
+<link rel="icon" href="assets/indway-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..900;1,62..125,300..900&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/lt-panel.webp">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<!-- Start fetching three.js while the page parses, instead of when the module script is reached -->
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/geometries/RoundedBoxGeometry.js">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/environments/RoomEnvironment.js">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js">
+<style>
+  :root {
+    --ground: #F4F4F3;
+    --ink: #262626;
+    --graphite: #5E605F;
+    --steel: #DCDDDB;
+    --line: #E2E3E1;
+    --arc: #EE7D10;
+    --ember: #D4531F;
+    --wide: 125%;
+    --gutter: clamp(16px, 4vw, 56px);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--arc); outline-offset: 3px; border-radius: 2px; }
+
+  .display {
+    font-stretch: var(--wide);
+    font-style: italic;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+    margin: 0;
+  }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: fixed; inset: 0 0 auto 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    padding: 18px var(--gutter);
+    background: color-mix(in srgb, var(--ground) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .nav__logo img { height: 26px; width: auto; }
+  .nav__links { display: flex; align-items: center; gap: 28px; font-size: 15px; }
+  .nav__links a:not(.btn) { text-decoration: none; color: var(--graphite); }
+  .nav__links a:not(.btn):hover { color: var(--ink); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--ink); color: var(--ground);
+    font-weight: 600; font-size: 15px; text-decoration: none;
+    transition: background .2s;
+  }
+  .btn:hover { background: var(--ember); }
+  .btn--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .btn--ghost:hover { background: var(--ink); color: var(--ground); }
+
+  /* ---------- 3D scene ---------- */
+  .scene { position: relative; }
+  .stage {
+    position: relative;
+    height: 100vh; height: 100svh;
+    overflow: hidden;
+  }
+  .is-zoomed #gl { cursor: zoom-out; }
+
+  .hero-copy {
+    position: absolute; z-index: 5;
+    left: var(--gutter); right: var(--gutter); top: clamp(84px, 11vh, 118px);
+    display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.6fr); gap: 24px 56px;
+    align-items: end;
+    pointer-events: none;
+  }
+  .hero-copy > * { pointer-events: auto; }
+  .hero-copy h1 { font-size: clamp(34px, 4vw, 64px); max-width: 20ch; }
+  .hero-copy p { margin: 0 0 4px; max-width: 40ch; font-size: 16px; color: var(--graphite); }
+  .hero-copy .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .hero-copy .hero-sub { margin: 12px 0 0; max-width: none; font-size: clamp(16px, 1.3vw, 19px); font-weight: 600; color: var(--ink); }
+
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s; touch-action: pan-y; }
+  .fallback {
+    position: absolute; left: 50%; bottom: 3vh;
+    width: min(84vw, 1100px, (100svh - 440px) * 1.65);
+    transform: translateX(-50%);
+    transition: opacity .6s;
+    user-select: none;
+  }
+  .gl-ready #gl { opacity: 1; }
+  .gl-ready .fallback { opacity: 0; }
+  .no-gl .spots, .no-gl .captions { display: none; }
+
+  .spots { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+  .spot {
+    position: absolute; left: 0; top: 0; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+    border: 0; padding: 0; background: none; cursor: pointer; pointer-events: auto;
+    display: grid; place-items: center;
+    transition: opacity .3s;
+  }
+  .spot i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--ground);
+    box-shadow: 0 0 0 1.5px var(--ink), 0 4px 10px rgba(0,0,0,.25);
+    transition: background .25s, transform .25s;
+  }
+  .spot:hover i { transform: scale(1.25); }
+  .spot.is-active i { background: var(--arc); box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(212,83,31,.5); }
+  .spot.is-active::before {
+    content: ""; position: absolute; inset: 13px; border-radius: 50%;
+    border: 1.5px solid var(--arc);
+    animation: ping 1.8s ease-out infinite;
+  }
+  @keyframes ping { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.1); opacity: 0; } }
+
+  .captions {
+    position: absolute; z-index: 6;
+    left: var(--gutter); bottom: clamp(24px, 7vh, 72px);
+    width: min(400px, calc(100% - 2 * var(--gutter)));
+    pointer-events: none;
+  }
+  .caption {
+    position: absolute; left: 0; bottom: 0; width: 100%;
+    padding: 24px 26px 26px;
+    background: rgba(255,255,255,.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 18px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 18px 40px -18px rgba(38,38,38,.35);
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .35s, transform .35s;
+  }
+  .caption.is-active { opacity: 1; transform: none; pointer-events: auto; }
+  .caption__step { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--graphite); font-variant-numeric: tabular-nums; }
+  .caption__bar { flex: 1; height: 2px; background: var(--steel); border-radius: 2px; overflow: hidden; }
+  .caption__bar span { display: block; height: 100%; background: var(--arc); }
+  .caption h2 { font-size: 26px; margin: 14px 0 8px; }
+  .caption p { margin: 0; font-size: 16px; color: var(--graphite); }
+  .caption .spec { margin-top: 14px; font-size: 14px; color: var(--ink); font-weight: 600; }
+  .caption__close {
+    position: absolute; top: 12px; right: 12px;
+    width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--ink); cursor: pointer;
+    display: grid; place-items: center; font-size: 22px; line-height: 1;
+  }
+  .caption__close:hover { background: rgba(0,0,0,.06); }
+  .caption .caption__step { padding-right: 36px; }
+  .caption__nav { display: flex; gap: 8px; margin-top: 18px; }
+  .caption__nav button {
+    flex: 1; padding: 10px 14px; border: 0; border-radius: 999px; cursor: pointer;
+    background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink); color: var(--ink);
+    font: 600 14px/1 "Archivo", system-ui, sans-serif;
+    transition: background .2s, color .2s;
+  }
+  .caption__nav button:hover:not(:disabled) { background: var(--ink); color: var(--ground); }
+  .caption__nav button:disabled { opacity: .35; cursor: default; }
+
+
+  /* ---------- Sections ---------- */
+  section.block { padding: clamp(80px, 12vw, 160px) var(--gutter); }
+  #range { padding-top: clamp(40px, 6vw, 80px); }
+  .block__head { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: 24px 64px; align-items: end; margin-bottom: clamp(40px, 6vw, 72px); }
+  .block__head h2 { font-size: clamp(34px, 4.6vw, 68px); max-width: 16ch; }
+  .block__head p { margin: 0; max-width: 46ch; color: var(--graphite); }
+
+  .range { list-style: none; margin: 0; padding: 0; border-top: 1.5px solid var(--ink); }
+  .range li {
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, .6fr);
+    gap: 12px 48px; align-items: baseline;
+    padding: 28px 0; border-bottom: 1px solid var(--steel);
+  }
+  .range h3 { margin: 0; font-size: clamp(20px, 2vw, 26px); font-stretch: 112%; font-weight: 700; letter-spacing: -0.01em; }
+  .range h3 small { display: block; font-size: 15px; font-weight: 500; font-stretch: 100%; color: var(--graphite); letter-spacing: 0; margin-top: 4px; }
+  .range p { margin: 0; color: var(--graphite); max-width: 52ch; }
+  .range .rating { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .process { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); counter-reset: step; }
+  .process li { counter-increment: step; position: relative; padding: 0 20px 0 0; }
+  .process li::before {
+    content: counter(step);
+    display: grid; place-items: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--ground); box-shadow: inset 0 0 0 1.5px var(--ink);
+    font-weight: 700; font-size: 15px; position: relative; z-index: 1;
+  }
+  .process li::after { content: ""; position: absolute; left: 40px; right: 0; top: 19.25px; height: 1.5px; background: var(--steel); }
+  .process li:last-child::after { display: none; }
+  .process h3 { margin: 22px 0 8px; font-size: 18px; font-stretch: 112%; font-weight: 700; }
+  .process p { margin: 0; font-size: 15px; color: var(--graphite); }
+
+  .contact {
+    margin: 0 var(--gutter) var(--gutter);
+    padding: clamp(48px, 8vw, 110px) clamp(24px, 6vw, 88px);
+    background: var(--ink); color: var(--ground);
+    border-radius: 28px;
+    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: 40px 64px; align-items: end;
+  }
+  .contact h2 { font-size: clamp(34px, 4.6vw, 68px); max-width: 16ch; }
+  .contact p { margin: 20px 0 0; max-width: 46ch; color: #BDBDBB; }
+  .contact dl { margin: 0; display: grid; gap: 18px; }
+  .contact dt { font-size: 14px; color: #9A9A98; }
+  .contact dd { margin: 2px 0 0; font-size: 20px; font-weight: 600; }
+  .contact dd a { text-decoration: none; }
+  .contact dd a:hover { color: var(--arc); }
+  .contact .btn { background: var(--arc); color: #1c1c1c; margin-top: 8px; justify-self: start; }
+  .contact .btn:hover { background: #fff; }
+
+  footer {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 28px var(--gutter) 40px; font-size: 14px; color: var(--graphite);
+  }
+  footer img { height: 20px; width: auto; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1100px) {
+    .process { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 44px; }
+    .process li:nth-child(3)::after { display: none; }
+  }
+  @media (max-width: 820px) {
+    body { font-size: 16px; }
+    .nav__links a:not(.btn) { display: none; }
+    .nav__links .btn { padding: 10px 16px; font-size: 14px; }
+    .nav__logo img { height: 22px; }
+    .hero-copy { grid-template-columns: 1fr; top: 84px; gap: 14px; }
+    .hero-copy p { margin: 0; }
+    .hero-copy .hero-sub { margin-top: 10px; }
+    .hero-copy .actions { margin-top: 6px; }
+    .captions { bottom: 16px; }
+    .caption { padding: 18px 20px 20px; }
+    .caption h2 { font-size: 21px; margin-top: 10px; }
+    .caption p { font-size: 15px; }
+    .spot i { width: 8px; height: 8px; }
+    .block__head, .contact { grid-template-columns: 1fr; }
+    .range li { grid-template-columns: 1fr; gap: 8px; padding: 22px 0; }
+    .range .rating { text-align: left; }
+    .process { grid-template-columns: 1fr; row-gap: 0; }
+    .process li { display: grid; grid-template-columns: 40px 1fr; column-gap: 18px; padding: 0 0 32px; }
+    .process li::before { grid-row: 1 / span 2; }
+    .process li::after, .process li:nth-child(3)::after { display: block; left: 19.25px; right: auto; top: 40px; bottom: 0; width: 1.5px; height: auto; }
+    .process li:last-child::after { display: none; }
+    .process h3 { margin: 8px 0 6px; }
+    .contact { border-radius: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .spot.is-active::before { animation: none; }
+    .caption { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="nav__logo" href="#top" aria-label="Indway home"><img src="assets/indway-logo.webp" alt="Indway" width="640" height="130"></a>
+  <nav class="nav__links" aria-label="Main">
+    <a href="#inside">Inside the panel</a>
+    <a href="#range">Range</a>
+    <a href="#process">How we build</a>
+    <a class="btn" href="#contact">Request a quote</a>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="scene" id="scene" aria-label="Indway LT panel">
+    <div class="stage" id="stage">
+      <div class="hero-copy" id="heroCopy">
+        <div class="hero-head">
+          <h1 class="display">Uninterrupted power starts here.</h1>
+          <p class="hero-sub">Custom LT panels, engineered and tested in-house.</p>
+        </div>
+        <div>
+          <p>PCC, MCC, APFC and distribution panels for plants, buildings and infrastructure, wired, tested and documented on our floor before they ship.</p>
+          <div class="actions">
+            <a class="btn" href="#contact">Request a quote</a>
+            <a class="btn btn--ghost" href="#inside" id="tourLink">See inside the panel</a>
+          </div>
+        </div>
+      </div>
+
+      <img class="fallback" src="assets/lt-panel.webp" alt="Indway LT panel lineup with ACB incomer, metering, outgoing feeders and drawout motor starter modules" width="1448" height="880" draggable="false">
+      <canvas id="gl" aria-label="Interactive 3D model of an Indway LT panel lineup"></canvas>
+      <div class="spots" id="spots"></div>
+      <div class="captions" id="inside"></div>
+    </div>
+  </section>
+
+  <section class="block" id="range">
+    <div class="block__head">
+      <h2 class="display">One factory, the full LT range.</h2>
+      <p>Every lineup starts from your single-line diagram and load list. We size busbars, breakers and enclosures to your fault level, then build to IEC 61439 and IS 8623.</p>
+    </div>
+    <ul class="range">
+      <li>
+        <h3>Power control centre<small>PCC</small></h3>
+        <p>Main incoming and distribution from transformer and DG sources, with ACB incomers, bus couplers and interlocking.</p>
+        <span class="rating">Up to 6300 A</span>
+      </li>
+      <li>
+        <h3>Motor control centre<small>MCC</small></h3>
+        <p>DOL, star-delta, soft starter and VFD feeders in fixed or drawout modules, with remote control and status wiring.</p>
+        <span class="rating">Up to 4000 A</span>
+      </li>
+      <li>
+        <h3>Power factor correction<small>APFC</small></h3>
+        <p>Automatic capacitor banks with a relay controller, detuned reactors and contactor switching to cut reactive power charges.</p>
+        <span class="rating">50 to 1000 kVAr</span>
+      </li>
+      <li>
+        <h3>Distribution boards<small>MLDB, PDB, SDB</small></h3>
+        <p>Main and sub distribution for lighting and power circuits in buildings, hospitals and campuses.</p>
+        <span class="rating">Up to 1600 A</span>
+      </li>
+      <li>
+        <h3>AMF and synchronising<small>DG panels</small></h3>
+        <p>Automatic mains failure changeover and multi-DG synchronising with load sharing controllers.</p>
+        <span class="rating">Up to 4000 A</span>
+      </li>
+      <li>
+        <h3>Feeder pillars<small>Outdoor</small></h3>
+        <p>Weatherproof enclosures for street lighting, townships and site distribution.</p>
+        <span class="rating">IP55 enclosure</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="block" id="process">
+    <div class="block__head">
+      <h2 class="display">From drawing to commissioning.</h2>
+      <p>You get approval drawings before we cut steel, and an open invitation to witness the tests before we ship.</p>
+    </div>
+    <ol class="process">
+      <li><h3>Review</h3><p>We study your SLD, load list and site conditions, and flag anything that needs a second look.</p></li>
+      <li><h3>Engineering</h3><p>GA drawings, wiring diagrams and a bill of materials, sent to you for approval.</p></li>
+      <li><h3>Fabrication</h3><p>CRCA sheet steel is cut, bent, welded and powder-coated in-house.</p></li>
+      <li><h3>Assembly</h3><p>Busbars, switchgear and control wiring are fitted and ferruled to the approved drawings.</p></li>
+      <li><h3>Testing</h3><p>High-voltage, insulation resistance and functional tests, with your team welcome to witness.</p></li>
+      <li><h3>Commissioning</h3><p>Dispatch, installation support and on-site commissioning with a full test report.</p></li>
+    </ol>
+  </section>
+
+  <section class="contact" id="contact">
+    <div>
+      <h2 class="display">Send us your single-line diagram.</h2>
+      <p>We'll come back with a GA drawing, a bill of materials and a price. Most enquiries get a first response within two working days.</p>
+    </div>
+    <dl>
+      <div><dt>Email</dt><dd><a href="mailto:sales@indway.in">sales@indway.in</a></dd></div>
+      <div><dt>Phone</dt><dd><a href="tel:+910000000000">+91 00000 00000</a></dd></div>
+      <a class="btn" href="mailto:sales@indway.in?subject=LT%20panel%20enquiry">Email your SLD</a>
+    </dl>
+  </section>
+</main>
+
+<footer>
+  <img src="assets/indway-logo.webp" alt="Indway" width="640" height="130">
+  <span>© 2026 Indway. LT panel manufacturer.</span>
+</footer>
+
+<script>
+  // If WebGL or the CDN is unavailable, fall back to the static photo.
+  setTimeout(() => { if (!window.__glReady) document.documentElement.classList.add("no-gl"); }, 8000);
+</script>
+<script type="module">
+import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+
+const $ = (s) => document.querySelector(s);
+const scene = $("#scene"), stage = $("#stage"), canvas = $("#gl");
+const heroCopy = $("#heroCopy"), capWrap = $("#inside"), spotWrap = $("#spots");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => t * t * (3 - 2 * t);
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+} catch (e) {
+  document.documentElement.classList.add("no-gl");
+  throw e;
+}
+// 1.5x is hard to tell from 2x with MSAA on, and shades ~45% fewer pixels on retina screens
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setClearColor(0xF4F4F3);
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true;
+// PCF (not PCFSoft) so shadow.radius gives a soft penumbra
+renderer.shadowMap.type = THREE.PCFShadowMap;
+// The key light never moves, so the shadow map is redrawn only while a part of the panel moves
+renderer.shadowMap.autoUpdate = false;
+renderer.shadowMap.needsUpdate = true;
+// Set when something outside the animation (a resize, a texture arriving) needs a fresh frame
+let dirty = true;
+const hiQ = Math.min(screen.width, screen.height) >= 700;
+
+const world = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+world.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+world.environmentIntensity = 0.6;
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 60);
+
+// Studio key: slightly warm, high and to the left, casting the only shadows
+const sun = new THREE.DirectionalLight(0xFFF4E6, 1.9);
+sun.position.set(-3, 6, 5);
+sun.castShadow = true;
+sun.shadow.mapSize.setScalar(hiQ ? 2048 : 1024);
+Object.assign(sun.shadow.camera, { left: -3.6, right: 3.6, top: 3.2, bottom: -1.6, near: 2, far: 14 });
+sun.shadow.bias = -0.0002;
+sun.shadow.normalBias = 0.012;
+sun.shadow.radius = 3;
+world.add(sun);
+// Cool fill from the right lifts the shadow side; a low rim separates the roof from the background
+const fill = new THREE.DirectionalLight(0xE6ECF5, 0.35);
+fill.position.set(5, 2.5, 3);
+world.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.6);
+rim.position.set(1, 4, -6);
+world.add(rim);
+world.add(new THREE.HemisphereLight(0xffffff, 0xB9B9B4, 0.18));
+
+/* ---------- Textures drawn on canvas ---------- */
+function canvasTex(w, h, draw, srgb = true) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  draw(c.getContext("2d"), w, h);
+  const t = new THREE.CanvasTexture(c);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+// Perforated louvre: one 64px tile = 4 cm of steel
+const ventTex = canvasTex(64, 64, (g, w) => {
+  g.fillStyle = "#CBD0CC"; g.fillRect(0, 0, w, w);
+  g.fillStyle = "#2E302F";
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    g.beginPath(); g.arc(8 + i * 16, 8 + j * 16, 4.2, 0, Math.PI * 2); g.fill();
+  }
+});
+ventTex.wrapS = ventTex.wrapT = THREE.RepeatWrapping;
+
+/* ---------- Powder coat: tileable orange-peel relief and gloss mottling ---------- */
+// Periodic value noise so the tiles repeat without seams
+function tileNoise(size, octaves, seed = 1) {
+  let s = seed;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const out = new Float32Array(size * size);
+  const sm = (t) => t * t * (3 - 2 * t);
+  for (const [cells, amp] of octaves) {
+    const lat = Float32Array.from({ length: cells * cells }, rnd);
+    const at = (i, j) => lat[((j % cells + cells) % cells) * cells + ((i % cells + cells) % cells)];
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      const fx = x / size * cells, fy = y / size * cells;
+      const ix = Math.floor(fx), iy = Math.floor(fy), tx = sm(fx - ix), ty = sm(fy - iy);
+      const a = lerp(at(ix, iy), at(ix + 1, iy), tx), b = lerp(at(ix, iy + 1), at(ix + 1, iy + 1), tx);
+      out[y * size + x] += lerp(a, b, ty) * amp;
+    }
+  }
+  return out;
+}
+function dataTex(size, fill, srgb = false) {
+  const data = new Uint8Array(size * size * 4);
+  fill(data);
+  const t = new THREE.DataTexture(data, size, size);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.generateMipmaps = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.needsUpdate = true;
+  return t;
+}
+// One tile of the normal map covers PAINT_TILE metres; a 512 px tile puts ~0.4 mm in each texel,
+// so the peel cells land at the 2 to 5 mm scale of a real powder-coat finish.
+const PAINT_TILE = 0.2;
+const peelTex = (() => {
+  const N = 512, h = tileNoise(N, [[128, 0.6], [64, 0.4]], 7);
+  return dataTex(N, (d) => {
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const hx = h[y * N + (x + 1) % N] - h[y * N + (x + N - 1) % N];
+      const hy = h[((y + 1) % N) * N + x] - h[((y + N - 1) % N) * N + x];
+      const nx = -hx * 3, ny = -hy * 3, l = Math.hypot(nx, ny, 1), i = (y * N + x) * 4;
+      d[i] = (nx / l * 0.5 + 0.5) * 255; d[i + 1] = (ny / l * 0.5 + 0.5) * 255; d[i + 2] = (1 / l * 0.5 + 0.5) * 255; d[i + 3] = 255;
+    }
+  });
+})();
+// Broad, soft variation in sheen (roughnessMap reads green); one tile spans about a metre
+const glossTex = (() => {
+  const N = 256, h = tileNoise(N, [[4, 0.5], [9, 0.3], [23, 0.2]], 3);
+  return dataTex(N, (d) => {
+    for (let i = 0; i < N * N; i++) { const v = (0.82 + h[i] * 0.18) * 255; d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; d[i * 4 + 3] = 255; }
+  });
+})();
+glossTex.repeat.setScalar(PAINT_TILE);
+
+// Box-project UVs in metres so the finish has the same grain on every face and panel size
+function metricUV(geo) {
+  const p = geo.attributes.position, n = geo.attributes.normal, uv = geo.attributes.uv;
+  const ox = Math.random() * 10, oy = Math.random() * 10;
+  for (let i = 0; i < p.count; i++) {
+    const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
+    const [u, v] = ax >= ay && ax >= az ? [p.getZ(i), p.getY(i)] : ay >= az ? [p.getX(i), p.getZ(i)] : [p.getX(i), p.getY(i)];
+    uv.setXY(i, ox + u / PAINT_TILE, oy + v / PAINT_TILE);
+  }
+  uv.needsUpdate = true;
+}
+
+/* ---------- Materials ---------- */
+const std = (color, roughness = .5, metalness = 0, extra = {}) =>
+  new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
+// RAL 7035 light grey, semi-gloss polyester powder on CRCA sheet. Paint is a dielectric, so metalness stays 0;
+// the steel underneath only shows through in the crisp bent edges.
+const paint = (roughness) => {
+  const m = new THREE.MeshPhysicalMaterial({
+    color: 0xCBD0CC, roughness, metalness: 0,
+    normalMap: peelTex, normalScale: new THREE.Vector2(0.06, 0.06),
+    roughnessMap: glossTex, specularIntensity: 0.9,
+  });
+  m.userData.metricUV = true;
+  return m;
+};
+const M = {
+  door: paint(.4),
+  body: paint(.46),
+  gap: std(0x121314, .8, 0),
+  interior: std(0x6E716F, .7, .1),
+  frame: std(0x2A2C2E, .45, .3),
+  black: std(0x18191B, .38, .1),
+  plate: std(0x2F3134, .5, .2),
+  red: std(0xC4262B, .35, 0),
+  copper: std(0xE39A66, .32, .85),
+  support: std(0x6B2E24, .6, 0),
+  label: std(0xEDEDEA, .7, 0),
+  screen: std(0x0B1418, .25, 0, { emissive: 0x2F7390, emissiveIntensity: .9 }),
+};
+const lampMat = (c) => std(c, .2, 0, { emissive: c, emissiveIntensity: 1.1 });
+// Printed faces and displays sit fractions of a millimetre off their backing; pulling them forward
+// in the depth buffer stops them z-fighting (flickering) when seen from across the room.
+const DECAL = { polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 };
+
+/* ---------- 22 mm LED pilot lights (AD16-22DS type) ---------- */
+// The coloured lens is most of what you see: a near-flat 25.6 mm disc with a rounded edge,
+// sitting on a thin black collar 29 mm across, standing ~7 mm proud of the door.
+const LENS_R = 0.0128;
+// Diffused lens face: even glow, a little hotter in the middle where the LED sits
+const lensLit = canvasTex(128, 128, (g, s) => {
+  const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  r.addColorStop(0, "#fff"); r.addColorStop(0.6, "#c4c4c4"); r.addColorStop(1, "#8a8a8a");
+  g.fillStyle = r; g.fillRect(0, 0, s, s);
+});
+const haloTex = canvasTex(64, 64, (g, s) => {
+  const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.25, "rgba(255,255,255,.35)"); r.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = r; g.fillRect(0, 0, s, s);
+});
+
+// Lathe profiles as (radius, height above the door), running from the door outward-in so faces point out
+const lathe = (pts, seg = 96) => new THREE.LatheGeometry(pts.map(([r, h]) => new THREE.Vector2(r, h)), seg).rotateX(Math.PI / 2);
+const collarGeo = lathe([[0.0144, 0], [0.0144, 0.0013], [0.0139, 0.0019], [0.0126, 0.0019]]);
+// Flat-topped lens with a 1.5 mm rolled edge; planar UVs so the glow texture maps straight on
+const lensGeo = (() => {
+  const geo = lathe([[LENS_R, 0.0015], [LENS_R, 0.0052], [0.0126, 0.0061], [0.0121, 0.0067], [0.0112, 0.0070], [0.006, 0.0071], [0, 0.0072]]);
+  const p = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / LENS_R * 0.5 + 0.5, p.getY(i) / LENS_R * 0.5 + 0.5);
+  return geo;
+})();
+
+const LAMP_C = { r: 0xFF2A1A, y: 0xFFA800, g: 0x1FD45A, b: 0x2A74FF };
+const collarMat = std(0x141516, .45, 0);
+const LENS = {}, HALO = {};
+for (const k in LAMP_C) {
+  const c = new THREE.Color(LAMP_C[k]);
+  LENS[k] = {
+    // Lit: the LED fills the diffused lens, running towards white in the middle
+    on: new THREE.MeshPhysicalMaterial({ color: c.clone().multiplyScalar(.5), emissive: c, emissiveMap: lensLit, emissiveIntensity: 2.4,
+      roughness: .3, clearcoat: 1, clearcoatRoughness: .08 }),
+    // Off: dark tinted translucent polycarbonate with a glossy face
+    off: new THREE.MeshPhysicalMaterial({ color: c.clone().lerp(new THREE.Color(0x303030), .35).multiplyScalar(.25),
+      roughness: .35, clearcoat: 1, clearcoatRoughness: .06 }),
+  };
+  HALO[k] = new THREE.SpriteMaterial({ map: haloTex, color: c, blending: THREE.AdditiveBlending,
+    transparent: true, depthWrite: false, toneMapped: false, opacity: .4 });
+}
+
+// Engraved traffolyte legend plate: white letters cut through black laminate
+const legendMat = {};
+function legend(text) {
+  return legendMat[text] ??= std(0xffffff, .45, 0, { map: canvasTex(192, 56, (g, w, h) => {
+    g.fillStyle = "#17181A"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#F2F2EE"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `700 ${text.length > 2 ? 30 : 36}px Arial, Helvetica, sans-serif`;
+    g.fillText(text, w / 2, h / 2 + 2);
+  }) });
+}
+
+/* ---------- Geometry helpers ---------- */
+const root = new THREE.Group();
+world.add(root);
+
+// Rounded edges need enough segments to read as a smooth bend in close-ups, not a chamfer
+function box(parent, w, h, d, mat, x, y, z, r = 0) {
+  const geo = r ? new RoundedBoxGeometry(w, h, d, r >= 0.002 ? 5 : 3, r) : new THREE.BoxGeometry(w, h, d);
+  if (mat.userData.metricUV) metricUV(geo);
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+function cyl(parent, r, h, mat, x, y, z, seg = 48) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
+  m.rotation.x = Math.PI / 2;
+  m.position.set(x, y, z + h / 2);
+  m.castShadow = true;
+  parent.add(m);
+  return m;
+}
+
+// Dimensions in metres
+const D = 0.8, PL = 0.1, BH = 2.0, CH = 0.3, FZ = D / 2, T = 0.02, G = 0.004;
+
+// A door is a group with its origin at the door's bottom-left hinge; parts are placed in door space.
+function door(parent, x, y, w, h, { screws = true } = {}) {
+  const pivot = new THREE.Group();
+  pivot.position.set(x + G, y + G, FZ + 0.001);
+  parent.add(pivot);
+  const dw = w - 2 * G, dh = h - 2 * G;
+  // Dark reveal behind the door edges: the shadowed gap between neighbouring doors
+  const rv = 0.014, z = FZ + 0.0005;
+  box(parent, w, rv, 0.001, M.gap, x + w / 2, y + rv / 2, z);
+  box(parent, w, rv, 0.001, M.gap, x + w / 2, y + h - rv / 2, z);
+  box(parent, rv, h, 0.001, M.gap, x + rv / 2, y + h / 2, z);
+  box(parent, rv, h, 0.001, M.gap, x + w - rv / 2, y + h / 2, z);
+  box(pivot, dw, dh, T, M.door, dw / 2, dh / 2, T / 2, 0.004);
+  if (screws) {
+    const ys = dh > 0.3 ? [0.07, dh - 0.07] : [dh / 2];
+    for (const yy of ys) cyl(pivot, 0.009, 0.008, M.black, dw - 0.03, yy, T);
+    if (dh > 0.3) for (const yy of [0.12, dh - 0.12]) box(pivot, 0.012, 0.05, 0.012, M.body, -0.002, yy, T / 2);
+  }
+  pivot.userData = { dw, dh };
+  return pivot;
+}
+function vent(p, x, y, w, h) {
+  const t = ventTex.clone(); t.repeat.set(w / 0.04, h / 0.04); t.needsUpdate = true;
+  box(p, w, h, 0.003, std(0xffffff, .45, 0, { map: t }), x, y, T + 0.0015);
+}
+// A lamp is [colour, legend, lit], e.g. ["r", "ON", true]
+function lamp(p, x, y, [c, text, lit]) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  const parts = [[collarGeo, collarMat], [lensGeo, LENS[c][lit ? "on" : "off"]]];
+  for (const [geo, mat] of parts) {
+    const m = new THREE.Mesh(geo, mat); m.castShadow = m.receiveShadow = true; g.add(m);
+  }
+  if (lit) {
+    const h = new THREE.Sprite(HALO[c]); h.scale.setScalar(0.042); h.position.z = 0.008; g.add(h);
+  }
+  if (text) box(p, 0.03, 0.009, 0.0015, legend(text), x, y - 0.026, T + 0.00075);
+}
+function lamps(p, cx, y, items, gap = 0.05) {
+  items.forEach((it, i) => lamp(p, cx + (i - (items.length - 1) / 2) * gap, y, it));
+}
+// 3 mm status LED on a relay fascia
+function led(p, x, y, z, c, lit) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.0032, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(Math.PI / 2),
+    lit ? LENS[c].on : LENS[c].off);
+  m.position.set(x, y, z); p.add(m);
+}
+const PHASE = [["r", "R", true], ["y", "Y", true], ["b", "B", true]];
+const status = (on) => [["r", "ON", on], ["g", "OFF", !on], ["y", "TRIP", false]];
+/* ---------- 96 x 96 mm multifunction power meter (PM5000-style) ---------- */
+// Anthracite bezel, recessed face, white-backlit graphic LCD behind a glossy window,
+// four soft keys under the display and alarm / heartbeat LEDs in the top corner.
+const MTR = 0.096, LCD_W = 0.064, LCD_H = 0.047, LCD_Y = 0.011;
+const METER_PAGES = {
+  V: { title: "Voltage L-L", rows: [["1-2", "415.2", "V"], ["2-3", "414.8", "V"], ["3-1", "416.0", "V"]], keys: ["V L-L", "V L-N", "Unbal", "▲"] },
+  A: { title: "Current", rows: [["I1", "812.4", "A"], ["I2", "796.1", "A"], ["I3", "805.7", "A"]], keys: ["Phase", "Dmd", "Unbal", "▲"] },
+  P: { title: "Power Summary", rows: [["kW", "548.6", ""], ["PF", "0.982", ""], ["Hz", "50.01", ""]], keys: ["Power", "PF", "Hz", "▲"] },
+};
+const lcdTex = {};
+function meterLCD(kind) {
+  return lcdTex[kind] ??= canvasTex(512, 376, (g, w, h) => {
+    const page = METER_PAGES[kind];
+    g.fillStyle = "#E3E9E4"; g.fillRect(0, 0, w, h);
+    const ink = "#16191A", font = (wt, px) => `${wt} ${px}px Arial, Helvetica, sans-serif`;
+    // Inverted title bar with the page name and a comms icon
+    g.fillStyle = ink; g.fillRect(0, 0, w, 58);
+    g.fillStyle = "#E3E9E4"; g.font = font(700, 32); g.textBaseline = "middle";
+    g.textAlign = "left"; g.fillText(page.title, 16, 30);
+    for (let i = 0; i < 4; i++) g.fillRect(w - 64 + i * 12, 42 - (i + 1) * 7, 8, (i + 1) * 7);
+    // Three readings: small channel label, big right-aligned value, unit
+    g.fillStyle = ink;
+    page.rows.forEach(([label, value, unit], i) => {
+      const yy = 104 + i * 76;
+      g.font = font(700, 30); g.textAlign = "left"; g.fillText(label, 18, yy + 4);
+      g.font = font(700, 66); g.textAlign = "right"; g.fillText(value, unit ? w - 62 : w - 20, yy);
+      if (unit) { g.font = font(700, 32); g.textAlign = "left"; g.fillText(unit, w - 52, yy + 10); }
+    });
+    // Soft-key captions lined up with the four buttons below the display
+    const kw = w / 4;
+    page.keys.forEach((k, i) => {
+      g.fillStyle = ink; g.fillRect(i * kw + 6, h - 50, kw - 12, 44);
+      g.fillStyle = "#E3E9E4"; g.font = font(700, 26); g.textAlign = "center"; g.fillText(k, i * kw + kw / 2, h - 27);
+    });
+  });
+}
+const meterFace = canvasTex(256, 256, (g, s) => {
+  g.fillStyle = "#26292C"; g.fillRect(0, 0, s, s);
+  // Small print along the bottom edge of the face
+  g.fillStyle = "#8E959B"; g.font = "700 11px Arial, Helvetica, sans-serif"; g.textAlign = "left";
+  g.fillText("POWER METER", 0.08 * s, 0.94 * s);
+});
+const MTRM = {
+  bezel: new THREE.MeshPhysicalMaterial({ color: 0x33373B, roughness: .5, clearcoat: .25, clearcoatRoughness: .45 }),
+  face: new THREE.MeshStandardMaterial({ map: meterFace, roughness: .55 }),
+  window: new THREE.MeshPhysicalMaterial({ color: 0x08090A, roughness: .2, clearcoat: 1, clearcoatRoughness: .05 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .04, transparent: true, opacity: .12,
+    clearcoat: 1, clearcoatRoughness: .02, depthWrite: false, ...DECAL }),
+  key: new THREE.MeshPhysicalMaterial({ color: 0x4A4F54, roughness: .42, clearcoat: .4, clearcoatRoughness: .3 }),
+};
+const lcdMat = {};
+function meter(p, x, y, kind = "V", tag) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  box(g, MTR, MTR, 0.008, MTRM.bezel, 0, 0, 0.004, 0.004);
+  box(g, MTR - 0.008, MTR - 0.008, 0.0012, MTRM.face, 0, 0, 0.0086, 0.001);
+  box(g, LCD_W + 0.008, LCD_H + 0.008, 0.0008, MTRM.window, 0, LCD_Y, 0.0096);
+  const tex = meterLCD(kind);
+  const lcd = new THREE.Mesh(new THREE.PlaneGeometry(LCD_W, LCD_H), lcdMat[kind] ??= new THREE.MeshStandardMaterial({
+    map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .5, roughness: .6, ...DECAL }));
+  lcd.position.set(0, LCD_Y, 0.0105); g.add(lcd);
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(LCD_W + 0.008, LCD_H + 0.008), MTRM.glass);
+  glass.position.set(0, LCD_Y, 0.011); g.add(glass);
+  // Soft keys sit directly under their on-screen captions
+  for (let i = 0; i < 4; i++) {
+    const kx = (i - 1.5) * LCD_W / 4;
+    box(g, 0.0125, 0.0075, 0.0024, MTRM.key, kx, -0.026, 0.0104, 0.0012);
+  }
+  // Heartbeat (green, blinking) and alarm (amber, off) LEDs
+  led(g, 0.029, -0.0385, 0.0092, "g", true);
+  led(g, 0.037, -0.0385, 0.0092, "y", false);
+  g.children.slice(-2).forEach((m) => m.scale.setScalar(0.65));
+  if (tag) box(p, 0.06, 0.0175, 0.0015, legend(tag), x, y - MTR / 2 - 0.018, T + 0.00075);
+}
+/* ---------- Feeder protection relay HMI (DEIF-style) ---------- */
+// Anthracite front with a colour single-line / measurement display, a pale grey LED strip down its
+// left side, twelve round F-keys to its right, four status LEDs above, and control / navigation keys
+// plus a service RJ45 port along the bottom. Laid out in "photo pixels" of an 820 x 650 px front view.
+const RLY_W = 0.17, RLY_PX = RLY_W / 820, RLY_H = 650 * RLY_PX, RLY_D = 0.03;
+const rx = (px) => (px - 600) * RLY_PX, ry = (py) => (325 - py) * RLY_PX;
+const rlyFace = canvasTex(1024, 812, (g) => {
+  g.scale(1024 / 820, 1024 / 820); g.translate(-190, 0);
+  g.fillStyle = "#383B3F"; g.fillRect(190, 0, 820, 650);
+  // Slightly darker band behind the keypad
+  g.fillStyle = "#34373A"; g.fillRect(190, 462, 820, 188);
+  // Display surround and the grey LED legend strip on its left
+  g.fillStyle = "#5C6064"; g.fillRect(304, 146, 542, 312);
+  g.fillStyle = "#9EA2A6"; g.fillRect(262, 146, 50, 312);
+  g.fillStyle = "#2B2D30";
+  for (let i = 0; i < 17; i++) { g.beginPath(); g.arc(291, 172 + i * 16.1, 4.5, 0, Math.PI * 2); g.fill(); }
+  // Maker's badge
+  g.fillStyle = "#F4F4F2"; g.fillRect(286, 70, 62, 34);
+  g.fillStyle = "#26282B"; g.font = "italic 900 22px Arial, Helvetica, sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("PPU", 317, 88);
+  // Status icons beside their LEDs: power, self-test, OK, alarm
+  g.strokeStyle = g.fillStyle = "#E8EAEA"; g.lineWidth = 2.5; g.lineCap = g.lineJoin = "round";
+  g.beginPath(); g.arc(598, 129, 8, -Math.PI / 3, Math.PI * 4 / 3); g.moveTo(598, 118); g.lineTo(598, 128); g.stroke();
+  g.beginPath(); g.arc(672, 129, 8, -Math.PI / 4, Math.PI * 1.5); g.stroke();
+  g.beginPath(); g.moveTo(672, 117); g.lineTo(677, 120); g.lineTo(672, 124); g.stroke();
+  g.beginPath(); g.moveTo(731, 129); g.lineTo(737, 136); g.lineTo(749, 119); g.stroke();
+  g.beginPath(); g.moveTo(804, 118); g.lineTo(814, 136); g.lineTo(794, 136); g.closePath(); g.stroke();
+  g.fillRect(803, 124, 2, 6); g.fillRect(803, 132, 2, 2);
+  // Recess behind the service port
+  g.fillStyle = "#1A1B1D"; g.fillRect(284, 494, 80, 72);
+});
+// Colour TFT: single-line diagram of the feeder on the left, live measurements boxed on the right
+const RLY_CY = "#1FA9DC";
+const rlyScreen = canvasTex(1024, 582, (g, w) => {
+  g.scale(w / 528, w / 528);
+  g.fillStyle = "#2C2F32"; g.fillRect(0, 0, 528, 300);
+  g.strokeStyle = g.fillStyle = RLY_CY; g.lineWidth = 3; g.lineCap = "round";
+  const line = (...pts) => { g.beginPath(); g.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]); g.stroke(); };
+  line(86, 45, 210, 45);                          // busbar
+  line(146, 45, 146, 58);                          // Q0 breaker: X contact, blade, fixed contact
+  line(140, 60, 152, 70); line(152, 60, 140, 70);
+  line(146, 66, 136, 98); line(146, 100, 146, 104);
+  g.beginPath(); g.arc(146, 104, 4, Math.PI, 0, true); g.stroke();
+  line(146, 108, 146, 132);                        // Q1 isolator
+  line(146, 132, 136, 166); line(146, 168, 146, 243);
+  line(146, 172, 104, 172, 104, 186);              // Q9 earth switch to ground
+  line(104, 186, 94, 220); line(104, 222, 104, 250);
+  line(90, 250, 118, 250); line(95, 256, 113, 256); line(100, 262, 108, 262);
+  g.font = "700 20px Arial, Helvetica, sans-serif"; g.textBaseline = "middle"; g.textAlign = "left";
+  g.fillText("Q0", 160, 95); g.fillText("Q1", 160, 150); g.fillText("Q9", 62, 213);
+  // Measurement boxes, values in step with the feeder meters
+  g.font = "700 25px Arial, Helvetica, sans-serif"; g.textAlign = "center";
+  ["S = 558 kVA", "P = 548 kW", "Q = 104 kVAr", "U = 415 V", "I = 776 A"].forEach((t, i) => {
+    g.strokeRect(300, 45 + i * 31, 178, 28); g.fillText(t, 389, 60 + i * 31);
+  });
+  // Setting group soft buttons: group 1 idle, group 2 active
+  g.font = "700 15px Arial, Helvetica, sans-serif";
+  [["#9A9EA2", 300], [RLY_CY, 395]].forEach(([c, x], i) => {
+    g.strokeStyle = g.fillStyle = c; g.strokeRect(x, 206, 83, 40);
+    g.fillText("Setting", x + 41.5, 218); g.fillText(`group ${i + 1}`, x + 41.5, 235);
+  });
+});
+// Key legends: dark print on the pale grey caps
+const rlyKeyTex = {};
+function rlyKeyLabel(k) {
+  return rlyKeyTex[k] ??= canvasTex(128, 128, (g, s) => {
+    g.clearRect(0, 0, s, s);
+    g.strokeStyle = g.fillStyle = "#3E4145"; g.lineWidth = 7; g.lineCap = g.lineJoin = "round";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    const path = (...pts) => { g.beginPath(); g.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]); g.stroke(); };
+    const icons = {
+      I: () => path(64, 40, 64, 88),
+      O: () => { g.beginPath(); g.arc(64, 64, 22, 0, Math.PI * 2); g.stroke(); },
+      LR: () => { g.font = "700 30px Arial, Helvetica, sans-serif"; g.fillText("L", 64, 42); g.fillText("R", 64, 88);
+        g.lineWidth = 4; path(44, 64, 84, 64); },
+      auto: () => { path(64, 36, 88, 80, 40, 80, 64, 36); g.lineWidth = 5; path(56, 62, 64, 52, 72, 62); },
+      up: () => path(42, 74, 64, 52, 86, 74),
+      down: () => path(42, 54, 64, 76, 86, 54),
+      left: () => path(74, 42, 52, 64, 74, 86),
+      right: () => path(54, 42, 76, 64, 54, 86),
+      back: () => { g.beginPath(); g.moveTo(52, 50); g.lineTo(76, 50); g.arc(76, 66, 16, -Math.PI / 2, Math.PI / 2); g.lineTo(56, 82); g.stroke();
+        path(60, 40, 48, 50, 60, 60); },
+      home: () => path(40, 64, 64, 42, 88, 64, 82, 64, 82, 88, 46, 88, 46, 64, 40, 64),
+      lock: () => { g.strokeRect(46, 62, 36, 28); g.beginPath(); g.arc(64, 52, 12, Math.PI, 0); g.stroke(); },
+      OK: () => { g.font = "700 38px Arial, Helvetica, sans-serif"; g.fillText("OK", 64, 66); },
+    };
+    if (icons[k]) icons[k]();
+    else { g.font = "700 34px Arial, Helvetica, sans-serif"; g.fillText(k, 64, 66); }
+  });
+}
+const RLY = {
+  body: new THREE.MeshPhysicalMaterial({ color: 0x1D1F22, roughness: .45, clearcoat: .3, clearcoatRoughness: .4 }),
+  face: new THREE.MeshStandardMaterial({ map: rlyFace, roughness: .6, ...DECAL }),
+  screen: new THREE.MeshStandardMaterial({ map: rlyScreen, emissive: 0xffffff, emissiveMap: rlyScreen, emissiveIntensity: .75, roughness: .6, ...DECAL }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .04, transparent: true, opacity: .1,
+    clearcoat: 1, clearcoatRoughness: .02, depthWrite: false, ...DECAL }),
+  key: new THREE.MeshPhysicalMaterial({ color: 0xB4B8BB, roughness: .45, clearcoat: .35, clearcoatRoughness: .35 }),
+  port: std(0x0E0F10, .5, .2),
+  flap: std(0x8C9094, .55, 0),
+};
+const rlyKeyMat = {};
+const RLY_KEYS = [
+  ...Array.from({ length: 12 }, (_, i) => [`F${i + 1}`, i < 6 ? 880 : 925, 187 + (i % 6) * 46.6, 18]),
+  ["I", 422, 517, 22], ["O", 422, 571, 22], ["LR", 507, 517, 22], ["auto", 507, 571, 22],
+  ["up", 706, 517, 23], ["left", 640, 571, 23], ["down", 706, 571, 23], ["right", 771, 571, 23],
+  ["back", 836, 517, 23], ["OK", 836, 571, 23], ["home", 921, 517, 23], ["lock", 921, 571, 23],
+];
+function relay(p, x, y) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  const Z = RLY_D;
+  box(g, RLY_W, RLY_H, Z, RLY.body, 0, 0, Z / 2, 0.006);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(RLY_W - 0.004, RLY_H - 0.004 * RLY_H / RLY_W), RLY.face);
+  face.position.z = Z + 0.0002; g.add(face);
+  // Display: 528 x 300 px window centred at (576, 302)
+  const sw = 528 * RLY_PX, sh = 300 * RLY_PX;
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), RLY.screen);
+  scr.position.set(rx(576), ry(302), Z + 0.0005); g.add(scr);
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), RLY.glass);
+  glass.position.set(rx(576), ry(302), Z + 0.0009); g.add(glass);
+  for (const [k, px, py, r] of RLY_KEYS) {
+    const kr = r * RLY_PX;
+    cyl(g, kr, 0.003, RLY.key, rx(px), ry(py), Z, 32);
+    const lab = new THREE.Mesh(new THREE.PlaneGeometry(kr * 2, kr * 2), rlyKeyMat[k] ??= new THREE.MeshStandardMaterial({
+      map: rlyKeyLabel(k), transparent: true, roughness: .5, depthWrite: false, ...DECAL }));
+    lab.position.set(rx(px), ry(py), Z + 0.0031); g.add(lab);
+  }
+  // Status LEDs: power on (green), self-test off, OK (green), alarm off
+  [[578, "g", true], [650, "y", false], [716, "g", true], [786, "r", false]].forEach(([px, c, lit]) => {
+    led(g, rx(px), ry(129), Z, c, lit); g.children[g.children.length - 1].scale.setScalar(0.55);
+  });
+  // Front RJ45 service port with its hinged grey dust flap hanging open below
+  box(g, 58 * RLY_PX, 50 * RLY_PX, 0.002, RLY.port, rx(324), ry(528), Z - 0.0006);
+  box(g, 70 * RLY_PX, 64 * RLY_PX, 0.004, RLY.flap, rx(324), ry(606), Z + 0.002, 0.0008);
+}
+/* ---------- Ammeter selector cam switch (Salzer / Kaycee pattern) ---------- */
+// 48 x 60 mm black anodised escutcheon engraved OFF-R-Y-B at 45° steps, with a fluted
+// knob skirt and a raised wing grip whose pointed end is the position pointer.
+const SEL_W = 0.048, SEL_H = 0.06, SEL_D = 0.0025, SEL_CY = 0.004;
+const SEL_POS = { OFF: -45, R: 0, Y: 45, B: 90 };
+const selPlate = canvasTex(384, 480, (g, w, h) => {
+  const px = w / SEL_W, cx = w / 2, cy = h / 2 - SEL_CY * px;
+  g.clearRect(0, 0, w, h);
+  g.strokeStyle = "rgba(230,230,225,.4)"; g.lineWidth = 3;
+  g.beginPath(); g.roundRect(0.0022 * px, 0.0022 * px, w - 0.0044 * px, h - 0.0044 * px, 0.0015 * px); g.stroke();
+  g.fillStyle = g.strokeStyle = "#E6E6E1"; g.lineWidth = 6; g.lineCap = "round";
+  g.textAlign = "center"; g.textBaseline = "middle"; g.font = "700 34px Arial, Helvetica, sans-serif";
+  for (const [text, deg] of Object.entries(SEL_POS)) {
+    const a = (deg - 90) * Math.PI / 180, cos = Math.cos(a), sin = Math.sin(a);
+    g.beginPath(); g.moveTo(cx + cos * 0.0152 * px, cy + sin * 0.0152 * px); g.lineTo(cx + cos * 0.0168 * px, cy + sin * 0.0168 * px); g.stroke();
+    const tr = (text === "OFF" ? 0.0192 : 0.0198) * px;
+    g.fillText(text, cx + cos * tr, cy + sin * tr);
+  }
+  g.font = "700 30px Arial, Helvetica, sans-serif";
+  g.fillText("AMMETER", cx, h - 0.0062 * px);
+});
+// Knob skirt: lathed, then fluted by pushing the outer wall in and out around its circumference
+const selSkirtGeo = (() => {
+  const geo = lathe([[0.0138, 0], [0.0138, 0.0045], [0.0127, 0.0058], [0.0105, 0.006], [0, 0.006]], 120);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), r = Math.hypot(x, y);
+    if (r < 0.0125) continue;
+    const k = 1 + 0.03 * Math.cos(Math.atan2(y, x) * 24);
+    pos.setXY(i, x * k, y * k);
+  }
+  geo.computeVertexNormals();
+  return geo;
+})();
+const selWingGeo = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(-0.0042, -0.0105);
+  s.quadraticCurveTo(-0.0042, -0.0135, 0, -0.0135);
+  s.quadraticCurveTo(0.0042, -0.0135, 0.0042, -0.0105);
+  s.lineTo(0.0036, 0.0115); s.lineTo(0, 0.0162); s.lineTo(-0.0036, 0.0115);
+  s.closePath();
+  return new THREE.ExtrudeGeometry(s, { depth: 0.0075, curveSegments: 36,
+    bevelEnabled: true, bevelThickness: 0.0016, bevelSize: 0.0012, bevelSegments: 4 });
+})();
+const SEL = {
+  plate: new THREE.MeshPhysicalMaterial({ color: 0x1C1D1F, roughness: .42, metalness: .55, clearcoat: .15 }),
+  engrave: new THREE.MeshStandardMaterial({ map: selPlate, transparent: true, roughness: .55, depthWrite: false, ...DECAL }),
+  knob: new THREE.MeshPhysicalMaterial({ color: 0x141517, roughness: .36, clearcoat: .5, clearcoatRoughness: .3 }),
+};
+function selector(p, x, y, at = "R") {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  box(g, SEL_W, SEL_H, SEL_D, SEL.plate, 0, 0, SEL_D / 2, 0.0012);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(SEL_W, SEL_H), SEL.engrave);
+  face.position.z = SEL_D + 0.0004; g.add(face);
+  const knob = new THREE.Group(); knob.position.set(0, SEL_CY, SEL_D); g.add(knob);
+  knob.rotation.z = -SEL_POS[at] * Math.PI / 180;
+  const skirt = new THREE.Mesh(selSkirtGeo, SEL.knob);
+  const wing = new THREE.Mesh(selWingGeo, SEL.knob); wing.position.z = 0.006 + 0.0016;
+  for (const m of [skirt, wing]) { m.castShadow = m.receiveShadow = true; knob.add(m); }
+  // White pointer line inlaid along the wing towards its tip
+  box(knob, 0.0013, 0.009, 0.0006, M.label, 0, 0.0065, 0.006 + 0.0016 + 0.0075 + 0.0016 + 0.0002).castShadow = false;
+}
+/* ---------- MCCB extended rotary handle (door-mounted, Compact NSX pattern) ---------- */
+// A 110 mm square base carrying a raised round dial printed O / TRIP / I, and a long moulded
+// bar handle across it: arrow end is the pointer, ribbed tail is the grip. ON stands the bar
+// upright; OFF lays it at 9 o'clock, where the padlock tab can be pulled out and locked off.
+const MCCB_B = 0.11, MCCB_BD = 0.006, MCCB_DR = 0.047, MCCB_DH = 0.004;
+const mccbDial = canvasTex(512, 512, (g, s) => {
+  const c = s / 2, px = s / (2 * (MCCB_DR - 0.0025));
+  g.clearRect(0, 0, s, s);
+  // Travel arc from O (9 o'clock) round to I (12 o'clock)
+  const r = 0.0355 * px;
+  g.strokeStyle = "#E9E9E4"; g.lineWidth = 4;
+  g.beginPath(); g.arc(c, c, r, Math.PI, Math.PI * 1.5); g.stroke();
+  // Tick on the exact position; the letter sits just outside the travel so the bar never hides it
+  const mark = (deg, textDeg, text, color, size, rr) => {
+    const a = deg * Math.PI / 180, ta = textDeg * Math.PI / 180;
+    g.strokeStyle = color; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(c + Math.cos(a) * (r - 10), c + Math.sin(a) * (r - 10)); g.lineTo(c + Math.cos(a) * (r + 8), c + Math.sin(a) * (r + 8)); g.stroke();
+    g.fillStyle = color; g.font = `700 ${size}px Arial, Helvetica, sans-serif`;
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText(text, c + Math.cos(ta) * rr * px, c + Math.sin(ta) * rr * px);
+  };
+  mark(-90, -73, "I", "#E8453C", 38, 0.0395);
+  mark(-135, -135, "TRIP", "#F2C12E", 24, 0.0395);
+  mark(180, 163, "O", "#3FBF6A", 38, 0.0395);
+  g.font = "700 22px Arial, Helvetica, sans-serif";
+  g.fillStyle = "#E8453C"; g.fillText("ON", c + 0.0275 * px, c - 0.0285 * px);
+  g.fillStyle = "#3FBF6A"; g.fillText("OFF", c - 0.0275 * px, c + 0.0285 * px);
+});
+const mccbDiscGeo = lathe([[MCCB_DR, 0], [MCCB_DR, 0.0025], [MCCB_DR - 0.0015, MCCB_DH], [0, MCCB_DH]], 128);
+const mccbHubGeo = lathe([[0.019, 0], [0.019, 0.005], [0.017, 0.0065], [0, 0.0065]], 96);
+const MCCB_HUB = 0.0065;
+// Bar handle outline, pointer up: rounded tail, slight swell over the hub, arrow tip
+const mccbBarGeo = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(-0.0105, -0.026);
+  s.quadraticCurveTo(-0.0105, -0.034, 0, -0.034);
+  s.quadraticCurveTo(0.0105, -0.034, 0.0105, -0.026);
+  s.lineTo(0.0115, 0);
+  s.lineTo(0.0075, 0.023);
+  s.lineTo(0, 0.0305);
+  s.lineTo(-0.0075, 0.023);
+  s.lineTo(-0.0115, 0);
+  s.closePath();
+  return new THREE.ExtrudeGeometry(s, { depth: 0.016, curveSegments: 36,
+    bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.0025, bevelSegments: 5 });
+})();
+const MCCB_BAR = 0.016 + 0.003;   // extruded depth plus the top bevel
+const mccbArrowGeo = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.0245); s.lineTo(0.0042, 0.0165); s.lineTo(0.0009, 0.0165); s.lineTo(0.0009, 0.006);
+  s.lineTo(-0.0009, 0.006); s.lineTo(-0.0009, 0.0165); s.lineTo(-0.0042, 0.0165); s.closePath();
+  return new THREE.ShapeGeometry(s);
+})();
+const mccbTabGeo = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(-0.006, 0); s.lineTo(0.006, 0); s.lineTo(0.006, -0.013);
+  s.quadraticCurveTo(0.006, -0.019, 0, -0.019); s.quadraticCurveTo(-0.006, -0.019, -0.006, -0.013); s.closePath();
+  const hole = new THREE.Path(); hole.absarc(0, -0.013, 0.0035, 0, Math.PI * 2, true);
+  s.holes.push(hole);
+  return new THREE.ExtrudeGeometry(s, { depth: 0.0016, curveSegments: 36,
+    bevelEnabled: true, bevelThickness: 0.0003, bevelSize: 0.0003, bevelSegments: 2 }).translate(0, 0, -0.0008);
+})();
+const mccbScrewGeo = lathe([[0.0029, 0], [0.0029, 0.0006], [0.0024, 0.0014], [0.0012, 0.0017], [0, 0.0017]]);
+const MCCB = {
+  base: new THREE.MeshPhysicalMaterial({ color: 0x1C1E21, roughness: .55, clearcoat: .15, clearcoatRoughness: .5 }),
+  disc: new THREE.MeshPhysicalMaterial({ color: 0x2A2D31, roughness: .45, clearcoat: .3, clearcoatRoughness: .4 }),
+  dial: new THREE.MeshStandardMaterial({ map: mccbDial, transparent: true, roughness: .5, depthWrite: false, ...DECAL }),
+  handle: new THREE.MeshPhysicalMaterial({ color: 0x141517, roughness: .34, clearcoat: .55, clearcoatRoughness: .28 }),
+  pointer: std(0xF2F2EE, .45, 0, { side: THREE.DoubleSide, ...DECAL }),
+  tab: std(0xB9BCBF, .35, .85),
+  screw: std(0xA6AAAE, .3, .9),
+  lock: new THREE.MeshPhysicalMaterial({ color: 0xC62828, roughness: .4, clearcoat: .6, clearcoatRoughness: .25 }),
+  shackle: std(0xC9CCD0, .22, 1),
+};
+function mccbHandle(p, x, y, on = true, tag) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  const add = (parent, geo, mat, px = 0, py = 0, pz = 0) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz);
+    m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+  };
+  // Square base, corner screws and the raised printed dial
+  add(g, new RoundedBoxGeometry(MCCB_B, MCCB_B, MCCB_BD, 3, 0.008), MCCB.base, 0, 0, MCCB_BD / 2);
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) add(g, mccbScrewGeo, MCCB.screw, sx * 0.047, sy * 0.047, MCCB_BD);
+  add(g, mccbDiscGeo, MCCB.disc, 0, 0, MCCB_BD);
+  const dial = new THREE.Mesh(new THREE.CircleGeometry(MCCB_DR - 0.0025, 128), MCCB.dial);
+  dial.position.z = MCCB_BD + MCCB_DH + 0.0004; g.add(dial);
+  // Door-interlock defeat screw at 4:30 on the dial
+  const dz = MCCB_BD + MCCB_DH;
+  add(g, new THREE.CylinderGeometry(0.003, 0.003, 0.001, 32).rotateX(Math.PI / 2), MCCB.screw, 0.028, -0.028, dz + 0.0005);
+  box(g, 0.0042, 0.0008, 0.0004, MCCB.base, 0.028, -0.028, dz + 0.0011).rotation.z = Math.PI / 4;
+
+  // Hub and bar handle; the bar rotates as one piece
+  add(g, mccbHubGeo, MCCB.handle, 0, 0, dz);
+  const bar = new THREE.Group(); bar.position.z = dz + MCCB_HUB + 0.003; g.add(bar);
+  bar.rotation.z = on ? 0 : Math.PI / 2;
+  add(bar, mccbBarGeo, MCCB.handle);
+  const top = MCCB_BAR;
+  // Grip ribs across the tail, and the white arrow printed at the pointer end
+  for (let i = 0; i < 5; i++) box(bar, 0.015, 0.0015, 0.0012, MCCB.handle, 0, -0.012 - i * 0.0036, top + 0.0005, 0.0005);
+  const arrow = new THREE.Mesh(mccbArrowGeo, MCCB.pointer); arrow.position.z = top + 0.0003; bar.add(arrow);
+
+  if (!on) {
+    // Locked off: padlock tab pulled out below the bar's tail, with a lockout padlock through it
+    const tz = bar.position.z + 0.008, hx = 0.013;
+    add(g, mccbTabGeo, MCCB.tab, hx, -0.008, tz);
+    const hy = -0.008 - 0.013, R = 0.0052, wire = 0.0012;
+    const yc = hy - 0.0035 + wire - R;
+    const sh = add(g, new THREE.TorusGeometry(R, wire, 16, 48, Math.PI), MCCB.shackle, hx, yc, tz);
+    sh.rotation.y = Math.PI / 2;
+    for (const sz of [-1, 1]) add(g, new THREE.CylinderGeometry(wire, wire, 0.006, 16), MCCB.shackle, hx, yc - 0.003, tz + sz * R);
+    add(g, new RoundedBoxGeometry(0.011, 0.024, 0.018, 3, 0.0025), MCCB.lock, hx, yc - 0.006 - 0.012, tz);
+    // Keyway on the underside-facing front of the lock body
+    add(g, new THREE.CylinderGeometry(0.0022, 0.0022, 0.001, 32).rotateX(Math.PI / 2), MCCB.shackle, hx, yc - 0.024, tz + 0.0092);
+  }
+  if (tag) box(p, 0.064, 0.0187, 0.0015, legend(tag), x, y - MCCB_B / 2 - 0.018, T + 0.00075);
+}
+/* ---------- Motor starter door handle (ABB OHB-style rotary handle) ---------- */
+// Round moulded base with a stepped flange, a long pill-shaped lever running off the hub and
+// a red padlock slide with grip ribs set into the lever's face at the hub end.
+const RH_BASE = 0.0125, RH_LEN = 0.105, RH_W = 0.024, RH_LD = 0.011, RH_BV = 0.0035;
+const rhBaseGeo = lathe([[0.0255, 0], [0.0255, 0.0016], [0.0238, 0.0024], [0.0232, 0.0085],
+  [0.0222, 0.0108], [0.0198, 0.0121], [0.016, RH_BASE], [0, RH_BASE]], 128);
+const pill = (x0, x1, hw) => {
+  const s = new THREE.Shape();
+  s.moveTo(x0, -hw); s.lineTo(x1, -hw);
+  s.absarc(x1, 0, hw, -Math.PI / 2, Math.PI / 2, false);
+  s.lineTo(x0, hw);
+  s.absarc(x0, 0, hw, Math.PI / 2, Math.PI * 1.5, false);
+  return s;
+};
+const rhLeverGeo = new THREE.ExtrudeGeometry(pill(0, RH_LEN - RH_W / 2, RH_W / 2 - RH_BV),
+  { depth: RH_LD, curveSegments: 36, bevelEnabled: true, bevelThickness: RH_BV, bevelSize: RH_BV, bevelSegments: 6 });
+const rhSlideGeo = new THREE.ExtrudeGeometry(pill(0, 0.036, 0.0052),
+  { depth: 0.0012, curveSegments: 36, bevelEnabled: true, bevelThickness: 0.0008, bevelSize: 0.0008, bevelSegments: 3 });
+const rhRibGeo = new RoundedBoxGeometry(0.0016, 0.0118, 0.0014, 2, 0.0005);
+const rhHoleGeo = new THREE.CircleGeometry(0.0011, 20);
+const RH = {
+  body: new THREE.MeshPhysicalMaterial({ color: 0x1B1C1E, roughness: .62, clearcoat: .15, clearcoatRoughness: .6 }),
+  red: new THREE.MeshPhysicalMaterial({ color: 0xD32A22, roughness: .45, clearcoat: .3, clearcoatRoughness: .4 }),
+  hole: new THREE.MeshBasicMaterial({ color: 0x050505, ...DECAL }),
+};
+function rotaryHandle(p, x, y) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  const add = (geo, mat, px = 0, py = 0, pz = 0) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz);
+    m.castShadow = m.receiveShadow = true; g.add(m); return m;
+  };
+  add(rhBaseGeo, RH.body);
+  // Two fixing holes on the base face, clear of the lever
+  for (const a of [0.62, 0.62 + Math.PI]) {
+    const h = add(rhHoleGeo, RH.hole, Math.cos(a) * 0.0205, Math.sin(a) * 0.0205, 0.0103);
+    h.rotation.set(Math.sin(a) * 0.5, -Math.cos(a) * 0.5, 0); h.castShadow = false;
+  }
+  // Lever: its rounded root end is centred on the spindle, the grip runs out to the right
+  const top = RH_BASE + RH_BV + RH_LD + RH_BV;
+  add(rhLeverGeo, RH.body, 0, 0, RH_BASE + RH_BV);
+  // Red padlock slide sunk into the lever face, with raised grip ribs part way along
+  add(rhSlideGeo, RH.red, -0.004, 0, top - 0.0012);
+  for (let i = 0; i < 4; i++) add(rhRibGeo, RH.red, 0.017 + i * 0.0035, 0, top + 0.0012);
+}
+/* ---------- 72 x 48 mm motor protection relay operator panel (UMC / TeSys-style) ---------- */
+// Door-mounted HMI for the starter's protection relay: blue backlit LCD, RUN / ALARM / TRIP LEDs
+// down the side and four navigation keys.
+const MPR_W = 0.072, MPR_H = 0.048, MPR_D = 0.007, MPR_FW = 0.068, MPR_FH = 0.044;
+const MPR_LW = 0.046, MPR_LH = 0.025, MPR_LX = -0.0085, MPR_LY = 0.0065;
+const MPR_LED_X = 0.02, MPR_LED_Y = [0.0145, 0.0065, -0.0015];
+const mprFace = canvasTex(544, 352, (g, w, h) => {
+  const px = w / MPR_FW, X = (x) => (x + MPR_FW / 2) * px, Y = (y) => (MPR_FH / 2 - y) * px;
+  g.fillStyle = "#26292C"; g.fillRect(0, 0, w, h);
+  // Recessed frame around the LCD window
+  g.strokeStyle = "#17191B"; g.lineWidth = 6;
+  g.strokeRect(X(MPR_LX - MPR_LW / 2 - 0.001), Y(MPR_LY + MPR_LH / 2 + 0.001), (MPR_LW + 0.002) * px, (MPR_LH + 0.002) * px);
+  g.fillStyle = "#AEB4BA"; g.font = "700 19px Arial, Helvetica, sans-serif"; g.textBaseline = "middle"; g.textAlign = "left";
+  ["RUN", "ALM", "TRIP"].forEach((t, i) => g.fillText(t, X(MPR_LED_X + 0.0035), Y(MPR_LED_Y[i])));
+  // Key legends printed under each key
+  g.textAlign = "center"; g.font = "700 17px Arial, Helvetica, sans-serif";
+  ["ESC", "▲", "▼", "OK"].forEach((t, i) => g.fillText(t, X(-0.024 + i * 0.0125), Y(-0.0205)));
+  g.fillStyle = "#E8453C"; g.fillText("RESET", X(0.0245), Y(-0.0205));
+  g.fillStyle = "#6F767D"; g.font = "700 15px Arial, Helvetica, sans-serif"; g.textAlign = "right";
+  g.fillText("MPR-72", X(0.032), Y(0.0195));
+});
+// Negative-mode blue STN LCD with its LED backlight on and nothing drawn: brighter in the middle, falling off to the edges
+const mprLCDTex = canvasTex(460, 250, (g, w, h) => {
+  const bl = g.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.62);
+  bl.addColorStop(0, "#3B5A85"); bl.addColorStop(1, "#1C2A40");
+  g.fillStyle = bl; g.fillRect(0, 0, w, h);
+});
+const mprLCDMat = new THREE.MeshStandardMaterial({
+  map: mprLCDTex, emissive: 0xffffff, emissiveMap: mprLCDTex, emissiveIntensity: .5, roughness: .6, ...DECAL });
+const mprWindowGeo = new THREE.PlaneGeometry(MPR_LW + 0.002, MPR_LH + 0.002);
+const mprLCDGeo = new THREE.PlaneGeometry(MPR_LW, MPR_LH);
+const MPR = {
+  face: new THREE.MeshStandardMaterial({ map: mprFace, roughness: .55 }),
+  reset: new THREE.MeshPhysicalMaterial({ color: 0x3A3D41, roughness: .4, clearcoat: .4, clearcoatRoughness: .3 }),
+};
+// One motor on the lineup has tripped on overload; the rest show no status light
+const TRIPPED = 5;
+function starterRelay(p, x, y, n) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  box(g, MPR_W, MPR_H, MPR_D, MTRM.bezel, 0, 0, MPR_D / 2, 0.003);
+  box(g, MPR_FW, MPR_FH, 0.001, MPR.face, 0, 0, MPR_D + 0.0005, 0.0006);
+  const z = MPR_D + 0.001;
+  const win = new THREE.Mesh(mprWindowGeo, MTRM.window); win.position.set(MPR_LX, MPR_LY, z + 0.0002); g.add(win);
+  const lcd = new THREE.Mesh(mprLCDGeo, mprLCDMat);
+  lcd.position.set(MPR_LX, MPR_LY, z + 0.0004); g.add(lcd);
+  const glass = new THREE.Mesh(mprWindowGeo, MTRM.glass); glass.position.set(MPR_LX, MPR_LY, z + 0.0008); g.add(glass);
+  // RUN / ALARM / TRIP LEDs
+  [["g", false], ["y", false], ["r", n === TRIPPED]].forEach(([c, lit], i) => {
+    led(g, MPR_LED_X, MPR_LED_Y[i], z, c, lit);
+    g.children[g.children.length - 1].scale.setScalar(0.6);
+  });
+  // Navigation keys and a recessed round reset button
+  for (let i = 0; i < 4; i++) box(g, 0.0095, 0.0055, 0.0022, MTRM.key, -0.024 + i * 0.0125, -0.0145, z + 0.0011, 0.001);
+  cyl(g, 0.0034, 0.0018, MPR.reset, 0.0245, -0.0145, z);
+  cyl(g, 0.0026, 0.0007, M.red, 0.0245, -0.0145, z + 0.0018).castShadow = false;
+}
+
+/* ---------- Withdrawable air circuit breaker, 1600 A frame ---------- */
+// Anthracite moulded front: touchscreen trip unit on the left, the mechanism column with its
+// closed and spring-charged flags and the O / I pushbuttons in the middle, the spring charging
+// lever folded into its recess on the right, and the racking strip along the bottom with the
+// padlock slide, key lock, position indicator and crank socket. The door carries a black
+// flange around the cut-out. Positions are on the breaker face, origin at its centre.
+const ACB_W = 0.3, ACB_H = 0.4, ACB_D = 0.34, ACB_Z = 0.03, ACB_PX = 3000;
+const ACB_TU = { x: -0.074, y: 0.045, w: 0.112, h: 0.235, d: 0.012 };
+const ACB_LCD = { y: 0.058, w: 0.076, h: 0.057 };
+const ACB_MX = 0.04, ACB_LEVER_X = 0.107;
+const acbFont = (wt, mm, px = ACB_PX) => `${wt} ${mm * px / 1000}px Arial, Helvetica, sans-serif`;
+const acbFaceTex = canvasTex(ACB_W * ACB_PX, ACB_H * ACB_PX, (g, w, h) => {
+  const px = ACB_PX, X = (x) => (x + ACB_W / 2) * px, Y = (y) => (ACB_H / 2 - y) * px;
+  const rr = (x0, y0, x1, y1, r) => { g.beginPath(); g.roundRect(X(x0), Y(y1), (x1 - x0) * px, (y1 - y0) * px, r * px); };
+  const text = (s, x, y, mm, color = "#C9CDD1", align = "center", wt = 700) => {
+    g.font = acbFont(wt, mm); g.fillStyle = color; g.textAlign = align; g.textBaseline = "middle"; g.fillText(s, X(x), Y(y));
+  };
+  // Moulded front, a touch lighter at the top where the key light falls
+  const bg = g.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, "#3C4045"); bg.addColorStop(1, "#2D3034");
+  g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  // Parting line of the front cover, and the lighter raised mechanism field
+  g.strokeStyle = "#1A1C1F"; g.lineWidth = 5; rr(-0.143, -0.131, 0.143, 0.193, 0.01); g.stroke();
+  g.fillStyle = "#464B51"; rr(0.006, -0.121, 0.138, 0.188, 0.007); g.fill();
+  g.strokeStyle = "#2A2D31"; g.lineWidth = 3; g.stroke();
+  // Frame size and rating along the top
+  text("ACB 1600", -0.13, 0.177, 5.2, "#E4E6E8", "left");
+  text("3P  DRAWOUT", 0.072, 0.172, 4.2, "#A9AEB3");
+  // Pushbutton legends in the mechanism column
+  text("OFF", ACB_MX, 0.024, 3.4); text("PUSH", ACB_MX, 0.0185, 2.4, "#9BA1A6");
+  text("ON", ACB_MX, -0.029, 3.4); text("PUSH", ACB_MX, -0.0345, 2.4, "#9BA1A6");
+  text("TU RESET", ACB_MX, -0.078, 2.6);
+  // Recess the charging lever folds into, with its pull-down arrow
+  g.fillStyle = "#16181A"; rr(ACB_LEVER_X - 0.024, -0.114, ACB_LEVER_X + 0.024, 0.142, 0.01); g.fill();
+  text("CHARGE", ACB_LEVER_X, 0.153, 2.6);
+  // Rating plate under the trip unit
+  g.fillStyle = "#E9EAE6"; rr(-0.132, -0.125, -0.018, -0.079, 0.002); g.fill();
+  g.fillStyle = "#2B2E32"; g.fillRect(X(-0.132), Y(-0.079), 0.114 * px, 0.0045 * px);
+  [["ACB 3P 1600 A", 3.6, 700], ["Iu = 1600 A     Ue = 690 V~", 2.6, 400], ["Icu = Ics = 66 kA  Icw = 66 kA 1s", 2.6, 400],
+    ["IEC 60947-2   50/60 Hz   Cat. B", 2.6, 400]].forEach(([s, mm, wt], i) => text(s, -0.128, -0.0895 - i * 0.0095, mm, "#1C1D1F", "left", wt));
+  // Racking strip: labels under each control, travel legend over the position window
+  g.fillStyle = "#1D1F22"; rr(-0.146, -0.197, 0.146, -0.137, 0.006); g.fill();
+  text("LOCK", -0.115, -0.188, 2.4, "#9BA1A6"); text("KEY", -0.078, -0.188, 2.4, "#9BA1A6");
+  text("DISC.   TEST   CONN.", 0.015, -0.145, 2.2, "#9BA1A6");
+  text("POSITION", 0.015, -0.188, 2.4, "#9BA1A6");
+  text("RACKING", 0.075, -0.188, 2.4, "#9BA1A6"); text("RELEASE", 0.119, -0.188, 2.4, "#9BA1A6");
+});
+// Trip unit fascia: header, LED legends and the test connector label
+const ACB_TUPX = 4000;
+const tripFaceTex = canvasTex(ACB_TU.w * ACB_TUPX, ACB_TU.h * ACB_TUPX, (g, w, h) => {
+  const px = ACB_TUPX, X = (x) => (x + ACB_TU.w / 2) * px, Y = (y) => (ACB_TU.h / 2 - y) * px;
+  const text = (s, x, y, mm, color = "#AEB4BA", align = "center") => {
+    g.font = acbFont(700, mm, px); g.fillStyle = color; g.textAlign = align; g.textBaseline = "middle"; g.fillText(s, X(x), Y(y));
+  };
+  g.fillStyle = "#1B1D20"; g.fillRect(0, 0, w, h);
+  g.strokeStyle = "#2C2F33"; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+  text("Protection", -0.046, 0.101, 4.2, "#E4E6E8", "left");
+  text("LSIG", 0.046, 0.101, 3.4, "#5AB0E6", "right");
+  ["Power", "Warning", "Alarm"].forEach((s, i) => text(s, -0.036 + i * 0.017, -0.004, 2, "#AEB4BA"));
+  text("i Test", 0.034, -0.006, 2.2);
+  text("TEST", 0, -0.104, 2.2);
+});
+// Home page of the trip unit: load on each phase as a share of In
+const tripLCDTex = canvasTex(456, 342, (g, w, h) => {
+  const f = (wt, p) => `${wt} ${p}px Arial, Helvetica, sans-serif`;
+  g.fillStyle = "#0A0C0F"; g.fillRect(0, 0, w, h);
+  g.fillStyle = "#222830"; g.fillRect(0, 0, w, 44); g.fillRect(0, h - 44, w, 44);
+  g.fillStyle = "#E6E9EC"; g.font = f(700, 24); g.textBaseline = "middle";
+  g.textAlign = "left"; g.fillText("Histograms", 14, 23);
+  g.textAlign = "right"; g.fillText("I  100%", w - 14, 23);
+  const bars = [["L1", 51], ["L2", 50], ["L3", 50], ["Ne", 4]];
+  const bw = 64, gap = (w - 4 * bw) / 5, top = 66, base = h - 88;
+  bars.forEach(([k, v], i) => {
+    const x = gap + i * (bw + gap), bh = (base - top) * v / 100;
+    g.fillStyle = "#1A1F26"; g.fillRect(x, top, bw, base - top);
+    g.fillStyle = "#3CC76A"; g.fillRect(x, base - bh, bw, bh);
+    g.fillStyle = "#E6E9EC"; g.font = f(700, 22); g.textAlign = "center";
+    g.fillText(`${v}%`, x + bw / 2, Math.min(base - bh - 14, base - 24));
+    g.fillText(k, x + bw / 2, base + 20);
+  });
+  g.strokeStyle = "#E0483E"; g.setLineDash([8, 6]); g.lineWidth = 2;
+  g.beginPath(); g.moveTo(8, top); g.lineTo(w - 8, top); g.stroke(); g.setLineDash([]);
+  g.fillStyle = "#E6E9EC"; g.font = f(700, 24); g.textAlign = "left";
+  g.fillText("Imax  L1  812 A", 14, h - 22);
+  g.fillStyle = "#3CC76A"; g.beginPath(); g.arc(w - 26, h - 22, 9, 0, Math.PI * 2); g.fill();
+});
+const acbLabel = (w, h, draw) => new THREE.MeshStandardMaterial({ map: canvasTex(w, h, draw), roughness: .5, ...DECAL });
+// Mechanical flags seen through their windows: contacts closed, closing springs recharged by the motor
+const acbFlag = (word, bg, fg) => acbLabel(240, 100, (g, w, h) => {
+  g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  g.fillStyle = fg; g.font = "700 44px Arial, Helvetica, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(word, w / 2, h / 2 + 2);
+});
+const acbCapLabel = (ch) => new THREE.MeshStandardMaterial({ transparent: true, roughness: .4, depthWrite: false, ...DECAL,
+  map: canvasTex(128, 128, (g, s) => {
+    g.clearRect(0, 0, s, s); g.fillStyle = "#F4F4F0";
+    if (ch === "O") { g.lineWidth = 11; g.strokeStyle = "#F4F4F0"; g.beginPath(); g.ellipse(s / 2, s / 2, 20, 30, 0, 0, Math.PI * 2); g.stroke(); }
+    else g.fillRect(s / 2 - 6, s / 2 - 32, 12, 64);
+  }) });
+const ACB = {
+  body: new THREE.MeshPhysicalMaterial({ color: 0x2F3236, roughness: .62, clearcoat: .1, clearcoatRoughness: .6 }),
+  face: new THREE.MeshStandardMaterial({ map: acbFaceTex, roughness: .62, ...DECAL }),
+  tu: new THREE.MeshPhysicalMaterial({ color: 0x17181B, roughness: .45, clearcoat: .3, clearcoatRoughness: .35 }),
+  tuFace: new THREE.MeshStandardMaterial({ map: tripFaceTex, roughness: .5, ...DECAL }),
+  lcd: new THREE.MeshStandardMaterial({ map: tripLCDTex, emissive: 0xffffff, emissiveMap: tripLCDTex, emissiveIntensity: .55, roughness: .6, ...DECAL }),
+  plug: new THREE.MeshPhysicalMaterial({ color: 0x8E9398, roughness: .5, clearcoat: .2, clearcoatRoughness: .5 }),
+  plugFace: acbLabel(280, 128, (g, w, h) => {
+    g.fillStyle = "#8E9398"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#17181A"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 26px Arial, Helvetica, sans-serif"; g.fillText("Rating Plug", w / 2, 38);
+    g.font = "700 40px Arial, Helvetica, sans-serif"; g.fillText("In = 1600 A", w / 2, 88);
+  }),
+  closed: acbFlag("CLOSED", "#D12A24", "#FFFFFF"),
+  charged: acbFlag("CHARGED", "#F3C317", "#17181A"),
+  position: acbFlag("CONN.", "#D12A24", "#FFFFFF"),
+  off: new THREE.MeshPhysicalMaterial({ color: 0xC62828, roughness: .38, clearcoat: .6, clearcoatRoughness: .2 }),
+  on: new THREE.MeshPhysicalMaterial({ color: 0x23884A, roughness: .38, clearcoat: .6, clearcoatRoughness: .2 }),
+  reset: new THREE.MeshPhysicalMaterial({ color: 0xF0C419, roughness: .4, clearcoat: .5, clearcoatRoughness: .25 }),
+  capO: acbCapLabel("O"), capI: acbCapLabel("I"),
+  lever: new THREE.MeshPhysicalMaterial({ color: 0x141517, roughness: .4, clearcoat: .5, clearcoatRoughness: .3 }),
+  flange: new THREE.MeshPhysicalMaterial({ color: 0x1A1B1D, roughness: .55, clearcoat: .15, clearcoatRoughness: .5 }),
+  hole: std(0x060707, .95, 0),
+  padlock: new THREE.MeshPhysicalMaterial({ color: 0xE8731A, roughness: .4, clearcoat: .4, clearcoatRoughness: .3 }),
+};
+const acbCollarGeo = lathe([[0.0155, 0], [0.0155, 0.0022], [0.0146, 0.0032], [0.0121, 0.0032], [0.0121, 0.0008]], 96);
+const acbCapGeo = lathe([[0.0114, 0], [0.0114, 0.0046], [0.0108, 0.0056], [0.0094, 0.006], [0, 0.0062]], 96);
+const acbKeyGeo = lathe([[0.0085, 0], [0.0085, 0.0035], [0.0078, 0.0045], [0.0068, 0.0048], [0, 0.0048]], 80);
+// Charging lever, hinged at its foot: a long flat paddle that narrows to a rounded grip
+const acbLeverGeo = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(-0.017, 0.004); s.quadraticCurveTo(-0.017, 0, -0.013, 0);
+  s.lineTo(0.013, 0); s.quadraticCurveTo(0.017, 0, 0.017, 0.004);
+  s.lineTo(0.015, 0.228); s.quadraticCurveTo(0.015, 0.238, 0, 0.238);
+  s.quadraticCurveTo(-0.015, 0.238, -0.015, 0.228); s.closePath();
+  return new THREE.ExtrudeGeometry(s, { depth: 0.006, curveSegments: 36,
+    bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 4 });
+})();
+function acbBreaker(p, x, y) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  const add = (parent, geo, mat, px = 0, py = 0, pz = 0) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz);
+    m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+  };
+  const plane = (parent, w, h, mat, px, py, pz) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.set(px, py, pz); parent.add(m); return m;
+  };
+  // Door flange: black moulded frame round the cut-out, dark behind so the opening reads when racked out
+  const fw = 0.36, fh = 0.46, fb = 0.025, ft = 0.01;
+  plane(g, fw - 2 * fb, fh - 2 * fb, ACB.hole, 0, 0, 0.0006);
+  box(g, fw, fb, ft, ACB.flange, 0, (fh - fb) / 2, ft / 2, 0.003);
+  box(g, fw, fb, ft, ACB.flange, 0, -(fh - fb) / 2, ft / 2, 0.003);
+  box(g, fb, fh - 2 * fb + 0.004, ft, ACB.flange, (fw - fb) / 2, 0, ft / 2, 0.003);
+  box(g, fb, fh - 2 * fb + 0.004, ft, ACB.flange, -(fw - fb) / 2, 0, ft / 2, 0.003);
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) add(g, mccbScrewGeo, MCCB.screw, sx * (fw / 2 - fb / 2), sy * (fh / 2 - fb / 2), ft);
+
+  // Moving part: everything below racks out together
+  const b = new THREE.Group(); g.add(b);
+  box(b, ACB_W, ACB_H, ACB_D, ACB.body, 0, 0, ACB_Z - ACB_D / 2, 0.006);
+  plane(b, ACB_W - 0.008, ACB_H - 0.008, ACB.face, 0, 0, ACB_Z + 0.0003);
+  // Arc chute vents across the roof, seen once the breaker is drawn out
+  for (let i = 0; i < 7; i++) box(b, ACB_W - 0.06, 0.001, 0.008, M.gap, 0, ACB_H / 2 + 0.0004, -0.02 - i * 0.02);
+
+  // Trip unit: raised black module with a colour touchscreen
+  const tu = new THREE.Group(); tu.position.set(ACB_TU.x, ACB_TU.y, ACB_Z); b.add(tu);
+  const tz = ACB_TU.d;
+  box(tu, ACB_TU.w, ACB_TU.h, tz, ACB.tu, 0, 0, tz / 2, 0.004);
+  plane(tu, ACB_TU.w - 0.004, ACB_TU.h - 0.004, ACB.tuFace, 0, 0, tz + 0.0003);
+  box(tu, ACB_LCD.w + 0.006, ACB_LCD.h + 0.006, 0.0008, MTRM.window, 0, ACB_LCD.y, tz + 0.0004);
+  plane(tu, ACB_LCD.w, ACB_LCD.h, ACB.lcd, 0, ACB_LCD.y, tz + 0.0010);
+  plane(tu, ACB_LCD.w + 0.006, ACB_LCD.h + 0.006, MTRM.glass, 0, ACB_LCD.y, tz + 0.0014);
+  // Power (lit), warning and alarm LEDs; i Test pushbutton
+  ["g", "y", "r"].forEach((c, i) => { led(tu, -0.036 + i * 0.017, 0.006, tz, c, i === 0); tu.children[tu.children.length - 1].scale.setScalar(0.7); });
+  cyl(tu, 0.0055, 0.0025, MTRM.key, 0.034, 0.006, tz);
+  // Rating plug and the covered test connector
+  box(tu, 0.074, 0.034, 0.005, ACB.plug, 0, -0.05, tz + 0.0025, 0.0015);
+  plane(tu, 0.07, 0.03, ACB.plugFace, 0, -0.05, tz + 0.0052);
+  box(tu, 0.03, 0.012, 0.002, M.black, 0, -0.092, tz + 0.001, 0.0008);
+
+  // Mechanism column: flag windows, O / I pushbuttons, trip-reset button
+  [[0.12, ACB.closed], [0.09, ACB.charged]].forEach(([fy, mat]) => {
+    box(b, 0.04, 0.02, 0.0015, MTRM.window, ACB_MX, fy, ACB_Z + 0.00075, 0.001);
+    plane(b, 0.034, 0.0145, mat, ACB_MX, fy, ACB_Z + 0.0017);
+    plane(b, 0.038, 0.018, MTRM.glass, ACB_MX, fy, ACB_Z + 0.0022);
+  });
+  [[0.045, ACB.off, ACB.capO], [-0.008, ACB.on, ACB.capI]].forEach(([by, mat, cap]) => {
+    add(b, acbCollarGeo, M.black, ACB_MX, by, ACB_Z);
+    add(b, acbCapGeo, mat, ACB_MX, by, ACB_Z);
+    const c = plane(b, 0.016, 0.016, cap, ACB_MX, by, ACB_Z + 0.0064); c.castShadow = false;
+  });
+  add(b, acbCollarGeo, M.black, ACB_MX, -0.064, ACB_Z).scale.setScalar(0.6);
+  add(b, acbCapGeo, ACB.reset, ACB_MX, -0.064, ACB_Z).scale.setScalar(0.6);
+
+  // Spring charging lever, stowed flat in its recess, grip ribs at the top
+  const lever = new THREE.Group(); lever.position.set(ACB_LEVER_X, -0.108, ACB_Z); b.add(lever);
+  add(lever, acbLeverGeo, ACB.lever, 0, 0, 0.002);
+  for (let i = 0; i < 7; i++) box(lever, 0.022, 0.0018, 0.0012, ACB.lever, 0, 0.17 + i * 0.0075, 0.0106, 0.0005);
+  box(lever, 0.012, 0.004, 0.0008, M.label, 0, 0.012, 0.0104);
+
+  // Racking strip: padlock slide, key lock, position indicator, crank socket and release button
+  const ry = -0.168, rz = ACB_Z;
+  box(b, 0.016, 0.026, 0.006, ACB.padlock, -0.115, ry, rz + 0.003, 0.002);
+  const ph = add(b, new THREE.CircleGeometry(0.0035, 32), ACB.hole, -0.115, ry - 0.005, rz + 0.0061); ph.castShadow = false;
+  add(b, acbKeyGeo, MCCB.tab, -0.078, ry, rz);
+  box(b, 0.0016, 0.009, 0.0006, ACB.hole, -0.078, ry, rz + 0.0049);
+  box(b, 0.062, 0.022, 0.0015, MTRM.window, 0.015, ry, rz + 0.00075, 0.001);
+  plane(b, 0.056, 0.017, ACB.position, 0.015, ry, rz + 0.0017);
+  plane(b, 0.06, 0.02, MTRM.glass, 0.015, ry, rz + 0.0022);
+  add(b, acbCollarGeo, M.black, 0.075, ry, rz);
+  const sock = add(b, new THREE.CircleGeometry(0.0118, 64), ACB.hole, 0.075, ry, rz + 0.0009); sock.castShadow = false;
+  const hex = add(b, new THREE.CircleGeometry(0.0055, 6), MCCB.tab, 0.075, ry, rz + 0.0012); hex.castShadow = false;
+  add(b, acbCollarGeo, M.black, 0.119, ry, rz).scale.setScalar(0.55);
+  add(b, acbCapGeo, MTRM.key, 0.119, ry, rz).scale.setScalar(0.55);
+  return b;
+}
+
+/* ---------- 40 mm mushroom-head emergency stop (22 mm mounting, twist to release) ---------- */
+// Flat-faced lathe parts take planar UVs so a printed face maps straight on
+const planarUV = (geo, R) => {
+  const p = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / R * 0.5 + 0.5, p.getY(i) / R * 0.5 + 0.5);
+  return geo;
+};
+const ES_PLATE_R = 0.032, ES_HEAD_R = 0.02;
+// Round yellow legend plate, lettering set round the ring
+const esPlateTex = canvasTex(1024, 1024, (g, s) => {
+  const c = s / 2;
+  g.fillStyle = "#E9B414"; g.fillRect(0, 0, s, s);
+  g.strokeStyle = "rgba(0,0,0,.18)"; g.lineWidth = 6; g.beginPath(); g.arc(c, c, c - 14, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = "#15161A"; g.font = "800 92px Arial, Helvetica, sans-serif"; g.textBaseline = "middle"; g.textAlign = "center";
+  const arc = (str, r, mid, top) => {
+    const ws = [...str].map((ch) => g.measureText(ch).width + 6);
+    let a = mid - (top ? 1 : -1) * ws.reduce((t, w) => t + w, 0) / r / 2;
+    [...str].forEach((ch, i) => {
+      a += (top ? 1 : -1) * ws[i] / r / 2;
+      g.save(); g.translate(c + Math.cos(a) * r, c + Math.sin(a) * r);
+      g.rotate(a + (top ? Math.PI / 2 : -Math.PI / 2)); g.fillText(ch, 0, 0); g.restore();
+      a += (top ? 1 : -1) * ws[i] / r / 2;
+    });
+  };
+  arc("EMERGENCY", 405, -Math.PI / 2, true);
+  arc("STOP", 405, Math.PI / 2, false);
+});
+// Moulded red head: two twist-release arrows raised off the dome, picked out by a bump map
+const esArrows = (g, s, fill, stroke) => {
+  const c = s / 2, r = s * 0.27;
+  g.lineCap = "round"; g.lineJoin = "round";
+  for (const a0 of [-2.5, 0.64]) {
+    g.strokeStyle = stroke; g.lineWidth = s * 0.035;
+    g.beginPath(); g.arc(c, c, r, a0, a0 + 1.6); g.stroke();
+    const a1 = a0 + 1.6, hx = c + Math.cos(a1) * r, hy = c + Math.sin(a1) * r, t = a1 + Math.PI / 2, n = a1;
+    g.fillStyle = fill; g.beginPath();
+    g.moveTo(hx + Math.cos(t) * s * 0.07, hy + Math.sin(t) * s * 0.07);
+    g.lineTo(hx + Math.cos(n) * s * 0.05, hy + Math.sin(n) * s * 0.05);
+    g.lineTo(hx - Math.cos(n) * s * 0.05, hy - Math.sin(n) * s * 0.05);
+    g.closePath(); g.fill();
+  }
+};
+const esHeadTex = canvasTex(512, 512, (g, s) => {
+  g.fillStyle = "#C81E1E"; g.fillRect(0, 0, s, s);
+  esArrows(g, s, "#A91616", "#A91616");
+});
+const esHeadBump = canvasTex(512, 512, (g, s) => {
+  g.fillStyle = "#000"; g.fillRect(0, 0, s, s);
+  g.filter = "blur(3px)"; esArrows(g, s, "#fff", "#fff");
+}, false);
+const ES = {
+  plate: new THREE.MeshPhysicalMaterial({ map: esPlateTex, roughness: .42, clearcoat: .35, clearcoatRoughness: .3 }),
+  bezel: new THREE.MeshStandardMaterial({ color: 0xC9CCD0, roughness: .22, metalness: 1 }),
+  stem: new THREE.MeshStandardMaterial({ color: 0x1B1C1F, roughness: .5, metalness: .1 }),
+  head: new THREE.MeshPhysicalMaterial({ map: esHeadTex, bumpMap: esHeadBump, bumpScale: 1.4,
+    roughness: .3, clearcoat: .8, clearcoatRoughness: .12, sheen: .2, sheenColor: 0xff6a5a }),
+};
+const esPlateGeo = planarUV(lathe([[ES_PLATE_R, 0], [ES_PLATE_R, 0.0011], [ES_PLATE_R - 0.0004, 0.0015], [0, 0.0015]], 128), ES_PLATE_R);
+// Chrome ring nut with a knurled-looking step, then the black actuator neck
+const esBezelGeo = lathe([[0.0158, 0.0015], [0.0158, 0.0038], [0.0152, 0.0046], [0.0136, 0.0048],
+  [0.0132, 0.0062], [0.0124, 0.0068], [0.0112, 0.0068], [0.0112, 0.004]], 128);
+const esStemGeo = lathe([[0.0098, 0.0066], [0.0098, 0.0118], [0.0092, 0.0124], [0, 0.0124]], 96);
+// Mushroom: rounded underside lip, straight rim, shallow dome
+const esHeadGeo = planarUV(lathe([[0.0095, 0.0112], [0.0172, 0.0116], [0.0192, 0.0124], [0.0199, 0.0138],
+  [ES_HEAD_R, 0.0158], [0.0196, 0.0174], [0.0182, 0.0192], [0.0156, 0.0207], [0.0118, 0.0218],
+  [0.0068, 0.0225], [0, 0.0228]], 128), ES_HEAD_R);
+function eStop(p, x, y) {
+  const g = new THREE.Group(); g.position.set(x, y, T); p.add(g);
+  for (const [geo, mat] of [[esPlateGeo, ES.plate], [esBezelGeo, ES.bezel], [esStemGeo, ES.stem], [esHeadGeo, ES.head]]) {
+    const m = new THREE.Mesh(geo, mat); m.castShadow = m.receiveShadow = true; g.add(m);
+  }
+  // Head twisted a little off square, as fitted
+  g.children[3].rotation.z = 0.35;
+  return g;
+}
+
+/* ---------- The lineup ---------- */
+const sections = [
+  { w: 1.0, type: "incomer" },
+  { w: 0.8, type: "feeder" },
+  { w: 0.8, type: "feeder" },
+  { w: 0.7, type: "feeder" },
+  { w: 0.55, type: "mcc" },
+  { w: 0.75, type: "mcc2" },
+];
+const total = sections.reduce((a, s) => a + s.w, 0);
+const topDoors = [];
+const anchors = {};
+let acbBody, drawer;
+const logoTex = new THREE.TextureLoader().load("assets/indway-logo.webp", () => { dirty = true; });
+logoTex.colorSpace = THREE.SRGBColorSpace;
+logoTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+let L = -total / 2;
+sections.forEach((sec, si) => {
+  const { w } = sec, cx = L + w / 2;
+  const g = new THREE.Group(); root.add(g);
+  const y0 = PL;
+
+  // Carcass: solid lower body, recessed busbar chamber, black plinth and roof
+  box(g, w - 0.002, BH - CH, D, M.body, cx, y0 + (BH - CH) / 2, 0, 0.003);
+  box(g, w - 0.002, CH, 0.08, M.interior, cx, y0 + BH - CH / 2, -D / 2 + 0.04);
+  box(g, w, PL, D, M.frame, cx, PL / 2, 0, 0.003);
+  box(g, w, 0.045, D + 0.02, M.frame, cx, y0 + BH + 0.0225, 0, 0.003);
+  box(g, 0.012, BH, 0.006, M.frame, L, y0 + BH / 2, FZ + 0.003, 0.0015);
+
+  // Busbar support insulator inside the chamber
+  box(g, 0.04, 0.27, 0.08, M.support, cx, y0 + BH - CH / 2, -0.15, 0.004);
+
+  // Busbar chamber cover (opens during the tour)
+  const top = door(g, L, y0 + BH - CH, w, CH);
+  topDoors.push(top);
+  if (si === 0) {
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.36 * 209 / 1025),
+      new THREE.MeshStandardMaterial({ map: logoTex, transparent: true, roughness: .6 }));
+    logo.position.set(top.userData.dw / 2, top.userData.dh / 2, T + 0.002);
+    top.add(logo);
+  } else {
+    vent(top, top.userData.dw / 2, top.userData.dh / 2, Math.min(0.42, w * 0.55), 0.14);
+  }
+
+  if (sec.type === "incomer") {
+    const bot = door(g, L, y0, w, 0.4);
+    vent(bot, bot.userData.dw / 2, 0.2, 0.62, 0.18);
+    const main = door(g, L, y0 + 0.4, w, BH - CH - 0.4);
+    const mx = main.userData.dw / 2;
+    lamps(main, mx, 1.2, PHASE, 0.08);
+    [["V", "VOLTAGE"], ["A", "CURRENT"], ["P", "POWER"]].forEach(([k, tag], i) => meter(main, mx + (i - 1) * 0.14, 1.05, k, tag));
+    lamps(main, mx, 0.9, status(true), 0.045);
+    cyl(main, 0.012, 0.01, M.plate, mx, 0.81, T);
+
+    // ACB in its door cut-out; the breaker body racks out on the tour
+    acbBody = acbBreaker(main, mx, 0.5);
+
+    eStop(main, mx, 0.16);
+
+    anchors.acb = [main, mx, 0.55, T + 0.08];
+    anchors.meter = [main, mx, 1.07, T + 0.04];
+  }
+
+  if (sec.type === "feeder") {
+    const lower = door(g, L, y0, w, 1.0);
+    const dw = lower.userData.dw;
+    mccbHandle(lower, dw * 0.62, 0.62, si !== 3, `O/G-${si}`);
+    vent(lower, dw / 2, 0.14, dw * 0.62, 0.16);
+    const upper = door(g, L, y0 + 1.0, w, BH - CH - 1.0);
+    // Two feeders running, one switched off
+    lamps(upper, dw / 2, 0.6, status(si !== 3));
+    relay(upper, dw / 2, 0.42);
+    selector(upper, dw / 2, 0.12, si !== 3 ? "R" : "OFF");
+    if (si === 1) anchors.feeder = [upper, dw / 2, 0.42, T + 0.05];
+    // On the closed cover's face; the frame loop sinks it onto the bars as the covers open
+    if (si === 2) anchors.busbar = [g, cx - w * 0.15, y0 + BH - CH / 2, FZ + T + 0.01];
+  }
+
+  if (sec.type === "mcc") {
+    const bot = door(g, L, y0, w, 0.25);
+    vent(bot, bot.userData.dw / 2, 0.12, w * 0.6, 0.12);
+    const n = 7, mh = (BH - CH - 0.25) / n;
+    for (let i = 0; i < n; i++) {
+      const y = y0 + 0.25 + i * mh;
+      box(g, w - 0.012, mh - 0.012, 0.002, M.black, cx, y + mh / 2, FZ + 0.0005);
+      const mod = door(g, L, y, w, mh);
+      const { dw, dh } = mod.userData;
+      box(mod, dw - 0.03, dh - 0.03, 0.5, M.body, dw / 2, dh / 2, -0.25);
+      rotaryHandle(mod, 0.14, dh / 2);
+      starterRelay(mod, 0.295, dh / 2, n - i);
+      if (i === 3) { drawer = mod; drawer.userData.z0 = mod.position.z; anchors.mcc = [mod, 0.14, dh / 2, T + 0.05]; }
+    }
+  }
+
+  if (sec.type === "mcc2") {
+    const bot = door(g, L, y0, w, 0.55);
+    vent(bot, bot.userData.dw / 2, 0.2, w * 0.66, 0.2);
+    const upper = door(g, L, y0 + 1.3, w, BH - CH - 1.3);
+    lamps(upper, upper.userData.dw / 2, 0.33, [...status(true), ...status(false)], 0.045);
+    relay(upper, upper.userData.dw / 2, 0.17);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) {
+      const mod = door(g, L + c * w / 2, y0 + 0.55 + r * 0.25, w / 2, 0.25);
+      rotaryHandle(mod, 0.1, mod.userData.dh / 2);
+      starterRelay(mod, 0.252, mod.userData.dh / 2, 8 + (2 - r) * 2 + c);
+    }
+    anchors.vent = [bot, bot.userData.dw / 2, 0.2, T + 0.02];
+  }
+  L += w;
+});
+
+// End panels and the busbars running the length of the lineup
+[-total / 2 - 0.01, total / 2 + 0.01].forEach((x) => box(root, 0.02, BH + 0.045, D + 0.02, M.body, x, PL + (BH + 0.045) / 2, 0, 0.004));
+// Four flat bars (L1, L2, L3, N) stacked face-forward so they read from the front
+[0.05, 0.115, 0.18, 0.245].forEach((dy) =>
+  box(root, total - 0.02, 0.045, 0.012, M.copper, 0, PL + BH - CH + dy, -0.1, 0.002));
+
+/* ---------- Floor: white tiles with hairline grout, shadow catcher, contact shadow ---------- */
+// One texture tile covers TILE_REPEAT metres: 4 x 4 tiles of 0.6 m, about 2.3 mm per texel
+const TILE_REPEAT = 2.4, FLOOR_SIZE = 28;
+const tileTex = canvasTex(1024, 1024, (g, N) => {
+  const n = 4, c = N / n;
+  let s = 5;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  g.fillStyle = "#B3B4B2"; g.fillRect(0, 0, N, N); // 9 mm grout joints
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const v = 238 + Math.round((rnd() - 0.5) * 4); // faint batch-to-batch tone shift
+    const x = i * c + 2, y = j * c + 2, w = c - 4;
+    g.fillStyle = `rgb(${v},${v},${v + 1})`;
+    g.fillRect(x, y, w, w);
+    // Eased edge: a soft shade just inside each joint so the tiles read as separate pieces
+    for (const [x0, y0, x1, y1, rx, ry, rw, rh] of [
+      [x, 0, x + 10, 0, x, y, 10, w], [x + w, 0, x + w - 10, 0, x + w - 10, y, 10, w],
+      [0, y, 0, y + 10, x, y, w, 10], [0, y + w, 0, y + w - 10, x, y + w - 10, w, 10],
+    ]) {
+      const gr = g.createLinearGradient(x0, y0, x1, y1);
+      gr.addColorStop(0, "rgba(0,0,0,.07)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = gr; g.fillRect(rx, ry, rw, rh);
+    }
+  }
+});
+tileTex.wrapS = tileTex.wrapT = THREE.RepeatWrapping;
+tileTex.repeat.setScalar(FLOOR_SIZE / TILE_REPEAT);
+
+// The floor dissolves into the page colour well before its edges
+const fadeTex = canvasTex(256, 256, (g, s) => {
+  const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  r.addColorStop(0, "#fff"); r.addColorStop(0.3, "#fff"); r.addColorStop(0.85, "#000");
+  g.fillStyle = r; g.fillRect(0, 0, s, s);
+}, false);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE), new THREE.MeshStandardMaterial({
+  map: tileTex, alphaMap: fadeTex, transparent: true, roughness: 0.55, metalness: 0, envMapIntensity: 0.3,
+}));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+floor.renderOrder = -2; // draw under the shadow layers
+world.add(floor);
+// The fill and rim lights cast no shadows and would wash the key's shadow out of the lit floor;
+// a catcher layered on top keeps it legible
+const catcher = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.ShadowMaterial({ opacity: 0.2, depthWrite: false }));
+catcher.rotation.x = -Math.PI / 2; catcher.position.y = 0.001; catcher.receiveShadow = true;
+world.add(catcher);
+
+const contactTex = canvasTex(256, 256, (g, s) => {
+  const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  r.addColorStop(0, "rgba(0,0,0,.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = r; g.fillRect(0, 0, s, s);
+});
+const contact = new THREE.Mesh(new THREE.PlaneGeometry(total + 1.2, D + 1.2),
+  new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, toneMapped: false }));
+contact.rotation.x = -Math.PI / 2; contact.position.y = 0.003;
+world.add(contact);
+
+// Tight, near-solid occlusion line right at the plinth so the lineup sits on the floor
+const FOOT_W = total + 0.04, FOOT_D = D + 0.02, FOOT_M = 0.1, FOOT_PX = 256;
+const footTex = canvasTex(Math.round((FOOT_W + 2 * FOOT_M) * FOOT_PX), Math.round((FOOT_D + 2 * FOOT_M) * FOOT_PX), (g, w) => {
+  // Only the blurred shadow is drawn: the rect sits off-canvas and its shadow is offset back in,
+  // so the edge fades both inward and outward instead of stopping at a hard core
+  g.fillStyle = "#000"; g.shadowColor = "rgba(0,0,0,.4)";
+  g.shadowBlur = 0.06 * FOOT_PX; // ~6 cm feather
+  g.shadowOffsetX = w;
+  g.fillRect(FOOT_M * FOOT_PX - w, FOOT_M * FOOT_PX, FOOT_W * FOOT_PX, FOOT_D * FOOT_PX);
+});
+const foot = new THREE.Mesh(new THREE.PlaneGeometry(FOOT_W + 2 * FOOT_M, FOOT_D + 2 * FOOT_M),
+  new THREE.MeshBasicMaterial({ map: footTex, transparent: true, depthWrite: false, toneMapped: false }));
+foot.rotation.x = -Math.PI / 2; foot.position.y = 0.004; foot.renderOrder = 1;
+world.add(foot);
+
+root.updateMatrixWorld(true);
+const anchorPos = {};
+for (const k in anchors) {
+  const [obj, x, y, z] = anchors[k];
+  anchorPos[k] = obj.localToWorld(new THREE.Vector3(x, y, z));
+}
+
+/* ---------- Merge static meshes ---------- */
+// The lineup is built from ~900 small meshes, each its own draw call (twice, with the shadow pass).
+// Meshes that never move relative to `container` and share a material are baked into one geometry,
+// cutting the draw calls by an order of magnitude. Moving parts are merged within themselves.
+function mergeStatic(container, skip = new Set()) {
+  const buckets = new Map(), inv = new THREE.Matrix4().copy(container.matrixWorld).invert();
+  (function walk(o) {
+    for (const c of o.children) {
+      if (skip.has(c)) continue;
+      if (c.isMesh && !Array.isArray(c.material)) {
+        const key = `${c.material.uuid}|${c.castShadow}|${c.receiveShadow}|${c.renderOrder}`;
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push(c);
+      }
+      walk(c);
+    }
+  })(container);
+  for (const list of buckets.values()) {
+    if (list.length < 2) continue;
+    const mixed = list.some((m) => !m.geometry.index);
+    const geos = list.map((m) => {
+      const g = mixed && m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+      for (const a of Object.keys(g.attributes)) if (!["position", "normal", "uv"].includes(a)) g.deleteAttribute(a);
+      return g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+    });
+    const geo = mergeGeometries(geos);
+    if (!geo) continue; // incompatible attributes: leave these meshes as they are
+    const { material, castShadow, receiveShadow, renderOrder } = list[0];
+    container.add(Object.assign(new THREE.Mesh(geo, material), { castShadow, receiveShadow, renderOrder }));
+    for (const m of list) m.removeFromParent();
+  }
+}
+const moving = new Set([...topDoors, acbBody, drawer]);
+mergeStatic(root, moving);
+for (const g of moving) mergeStatic(g);
+root.updateMatrixWorld(true);
+
+/* ---------- Tour content ---------- */
+const steps = [
+  { at: "acb", yaw: -0.55, pitch: 0.06, dist: 2.0, title: "Air circuit breaker incomer",
+    body: "The ACB takes supply from your transformer or DG and protects the whole board. It racks out on its drawout chassis for maintenance, without opening the busbar chamber.",
+    spec: "630 A to 6300 A, 50 kA and above" },
+  { at: "meter", yaw: -0.22, pitch: 0.04, dist: 1.7, title: "Metering and indication",
+    body: "Multifunction meters, phase indication lamps and selector switches on the incomer door show voltage, current, power factor and energy at a glance.",
+    spec: "Modbus-ready meters on request" },
+  { at: "busbar", yaw: 0.28, pitch: 0.1, dist: 2.2, title: "Busbar chamber",
+    body: "Copper or aluminium busbars run the full length of the lineup in a segregated top chamber, on insulated supports sized for your short-circuit level.",
+    spec: "Form 2 to Form 4b separation" },
+  { at: "feeder", yaw: -0.28, pitch: 0.05, dist: 1.4, title: "Outgoing feeders",
+    body: "Each feeder has its own lockable door, protection relay and meter, so one circuit can be isolated while the rest stay live.",
+    spec: "MCCB or ACB outgoings" },
+  { at: "mcc", yaw: 0.8, pitch: 0.14, dist: 1.9, title: "Motor starter modules",
+    body: "Compact compartments for DOL and star-delta starters. Each module slides out on its own, so you can swap a starter without shutting down the section.",
+    spec: "Fixed or drawout modules" },
+  { at: "vent", yaw: 0.4, pitch: 0.16, dist: 1.5, title: "Ventilation and finish",
+    body: "Filtered louvres keep internal temperatures in check. The CRCA steel enclosure is powder-coated, RAL 7035 unless you specify otherwise.",
+    spec: "IP42 to IP54 indoor enclosures" },
+];
+
+const spots = steps.map((s, i) => {
+  const b = document.createElement("button");
+  b.className = "spot";
+  b.setAttribute("aria-label", s.title);
+  b.innerHTML = "<i></i>";
+  b.addEventListener("click", (e) => { e.stopPropagation(); open(i + 1); });
+  spotWrap.appendChild(b);
+  return b;
+});
+const caps = steps.map((s, i) => {
+  const d = document.createElement("article");
+  d.className = "caption";
+  d.innerHTML = `
+    <button class="caption__close" type="button" aria-label="Zoom out">&times;</button>
+    <div class="caption__step"><span>${i + 1} of ${steps.length}</span><span class="caption__bar"><span style="width:${(i + 1) / steps.length * 100}%"></span></span></div>
+    <h2 class="display">${s.title}</h2>
+    <p>${s.body}</p>
+    <div class="spec">${s.spec}</div>
+    <div class="caption__nav">
+      <button type="button" data-go="${i}" ${i === 0 ? "disabled" : ""}>&larr; Previous</button>
+      <button type="button" data-go="${i + 2}" ${i === steps.length - 1 ? "disabled" : ""}>Next &rarr;</button>
+    </div>`;
+  d.querySelector(".caption__close").addEventListener("click", () => open(0));
+  d.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => open(+b.dataset.go)));
+  capWrap.appendChild(d);
+  return d;
+});
+
+/* ---------- Camera keyframes ---------- */
+const TAN = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+const CENTER = new THREE.Vector3(0, PL + BH / 2, 0);
+let W, H, mobile, keys;
+
+function layout() {
+  W = stage.clientWidth; H = stage.clientHeight;
+  mobile = W < 820;
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H;
+
+  // Opening shot: fit the whole lineup into the space under the headline
+  const top = heroCopy.offsetTop + heroCopy.offsetHeight + (mobile ? 16 : 24);
+  const room = Math.max(H * 0.3, H - top - 16);
+  const visH = Math.max(3.0 / (room / H), (mobile ? 4.7 : 6.0) / ((mobile ? 1 : 0.8) * camera.aspect));
+  const heroDist = visH / (2 * TAN);
+  const hero = { t: CENTER, yaw: -0.5, pitch: 0.12, dist: heroDist, sx: 0, sy: (top + room * 0.44 - H / 2) / H };
+
+  const fit = mobile ? Math.max(1, 1.25 / camera.aspect) : 1;
+  keys = [
+    hero,
+    ...steps.map((s) => ({ t: anchorPos[s.at], yaw: s.yaw, pitch: s.pitch, dist: s.dist * fit, sx: mobile ? 0 : 0.14, sy: mobile ? -0.13 : 0 })),
+  ];
+  dirty = true;
+}
+
+/* ---------- Click to zoom ---------- */
+// 0 is the overview; 1..n zooms the camera onto that step's hotspot and shows its card
+let current = 0;
+function open(k) {
+  current = clamp(k, 0, steps.length);
+  const act = current - 1;
+  spots.forEach((s, i) => s.classList.toggle("is-active", i === act));
+  caps.forEach((c, i) => c.classList.toggle("is-active", i === act));
+  stage.classList.toggle("is-zoomed", current > 0);
+  if (current > 0) caps[act].querySelector(".caption__close").focus({ preventScroll: true, focusVisible: false });
+}
+canvas.addEventListener("click", () => { if (current) open(0); });
+addEventListener("keydown", (e) => {
+  if (!current) return;
+  if (e.key === "Escape") open(0);
+  else if (e.key === "ArrowRight" && current < steps.length) open(current + 1);
+  else if (e.key === "ArrowLeft" && current > 1) open(current - 1);
+});
+document.querySelectorAll('a[href="#inside"]').forEach((a) => a.addEventListener("click", (e) => {
+  e.preventDefault();
+  scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  open(1);
+}));
+
+/* ---------- Input: cursor orbit ---------- */
+const mouse = { x: 0, y: 0 }, m = { x: 0, y: 0 };
+addEventListener("pointermove", (e) => {
+  if (e.pointerType !== "mouse") return;
+  mouse.x = e.clientX / innerWidth * 2 - 1;
+  mouse.y = e.clientY / innerHeight * 2 - 1;
+}, { passive: true });
+document.addEventListener("mouseleave", () => { mouse.x = mouse.y = 0; });
+
+let pose = null;
+// Moving parts ease toward open only while their step is showing
+const part = { acb: 0, doors: 0, drawer: 0, zoom: 0 };
+const v = new THREE.Vector3();
+
+// Only draw while the scene is on screen
+let onScreen = true;
+new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; if (onScreen) dirty = true; }).observe(scene);
+
+// Eases a value toward its target and snaps once within `eps`, so a settled scene stops redrawing.
+// Returns whether the value moved.
+const EPS = 1e-4;
+function approach(obj, key, target, f) {
+  const v = obj[key];
+  if (v === target) return false;
+  obj[key] = Math.abs(target - v) < EPS ? target : lerp(v, target, f);
+  return true;
+}
+
+function frame(time) {
+  requestAnimationFrame(frame);
+  if (!onScreen) return;
+
+  const k = keys[current];
+  const f = reduce ? 1 : 0.08;
+  if (!pose) pose = { ...k, t: k.t.clone() };
+  let changed = dirty;
+  dirty = false;
+  if (!pose.t.equals(k.t)) {
+    changed = true;
+    if (pose.t.distanceToSquared(k.t) < EPS * EPS) pose.t.copy(k.t); else pose.t.lerp(k.t, f);
+  }
+  for (const key of ["yaw", "pitch", "dist", "sx", "sy"]) changed = approach(pose, key, k[key], f) || changed;
+  const goal = { acb: current === 1, doors: current === 3, drawer: current === 5, zoom: current > 0 };
+  let partsMoved = false;
+  for (const key in part) partsMoved = approach(part, key, +goal[key], reduce ? 1 : 0.07) || partsMoved;
+  changed = approach(m, "x", reduce ? 0 : mouse.x, 0.07) || changed;
+  changed = approach(m, "y", reduce ? 0 : mouse.y, 0.07) || changed;
+  if (partsMoved) renderer.shadowMap.needsUpdate = true;
+  if (!changed && !partsMoved) return; // nothing moved since the last frame drawn
+
+  const yaw = pose.yaw + m.x * 0.24;
+  const pitch = Math.max(0.02, pose.pitch + m.y * 0.1);
+  camera.position.set(
+    pose.t.x + Math.sin(yaw) * Math.cos(pitch) * pose.dist,
+    pose.t.y + Math.sin(pitch) * pose.dist,
+    pose.t.z + Math.cos(yaw) * Math.cos(pitch) * pose.dist,
+  );
+  camera.lookAt(pose.t);
+  camera.setViewOffset(W, H, -pose.sx * W, -pose.sy * H, W, H);
+  camera.updateProjectionMatrix();
+  // Refresh now so the hotspots project with this frame's camera, not the one render() left behind
+  camera.updateMatrixWorld();
+
+  // Moving parts: ACB racks out, busbar covers swing open, a starter module slides out
+  acbBody.position.z = 0.2 * ease(part.acb);
+  topDoors.forEach((d, i) => { d.rotation.y = -1.75 * ease(clamp(part.doors * 1.4 - i * 0.07, 0, 1)); });
+  drawer.position.z = drawer.userData.z0 + 0.32 * ease(part.drawer);
+
+  // Hero copy recedes while zoomed in
+  const h = clamp(part.zoom / 0.6, 0, 1);
+  heroCopy.style.opacity = 1 - h;
+  heroCopy.style.transform = `translateY(${-h * 40}px)`;
+  heroCopy.style.visibility = h >= 0.99 ? "hidden" : "visible";
+
+  // Pin hotspots to the model: all of them on the overview, only the open one when zoomed
+  steps.forEach((s, i) => {
+    v.copy(anchorPos[s.at]);
+    if (s.at === "acb") v.z += acbBody.position.z;
+    if (s.at === "mcc") v.z += drawer.position.z - drawer.userData.z0;
+    if (s.at === "busbar") v.z -= (FZ + T + 0.104) * ease(part.doors); // lands on the bars' front face (z = -0.094)
+    v.project(camera);
+    const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
+    spots[i].style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+    const show = v.z < 1 && (current ? i === current - 1 : part.zoom < 0.3);
+    spots[i].style.opacity = show ? 1 : 0;
+    spots[i].style.pointerEvents = show ? "auto" : "none";
+  });
+
+  renderer.render(world, camera);
+  if (!window.__glReady) {
+    window.__glReady = true;
+    document.documentElement.classList.add("gl-ready");
+  }
+}
+
+layout();
+addEventListener("resize", layout);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

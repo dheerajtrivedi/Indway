@@ -1,0 +1,176 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - link "Indway home" [ref=f1e3] [cursor=pointer]:
+      - /url: "#top"
+      - img "Indway" [ref=f1e4]
+    - navigation "Main" [ref=f1e5]:
+      - link "Inside the panel" [ref=f1e6] [cursor=pointer]:
+        - /url: "#inside"
+      - link "Range" [ref=f1e7] [cursor=pointer]:
+        - /url: "#range"
+      - link "How we build" [ref=f1e8] [cursor=pointer]:
+        - /url: "#process"
+      - link "Request a quote" [ref=f1e9] [cursor=pointer]:
+        - /url: "#contact"
+  - main [ref=f1e10]:
+    - region "Indway LT panel" [ref=f1e11]:
+      - generic [ref=f1e12]:
+        - generic:
+          - generic [ref=f1e13]:
+            - heading "Uninterrupted power starts here." [level=1] [ref=f1e14]
+            - paragraph [ref=f1e15]: Custom LT panels, engineered and tested in-house.
+          - generic [ref=f1e16]:
+            - paragraph [ref=f1e17]: PCC, MCC, APFC and distribution panels for plants, buildings and infrastructure, wired, tested and documented on our floor before they ship.
+            - generic [ref=f1e18]:
+              - link "Request a quote" [ref=f1e19] [cursor=pointer]:
+                - /url: "#contact"
+              - link "See inside the panel" [ref=f1e20] [cursor=pointer]:
+                - /url: "#inside"
+        - img "Indway LT panel lineup with ACB incomer, metering, outgoing feeders and drawout motor starter modules" [ref=f1e21]
+        - generic "Interactive 3D model of an Indway LT panel lineup" [ref=f1e22]
+        - generic:
+          - button "Air circuit breaker incomer" [ref=f1e23] [cursor=pointer]
+          - button "Metering and indication" [ref=f1e25] [cursor=pointer]
+          - button "Busbar chamber" [ref=f1e27] [cursor=pointer]
+          - button "Outgoing feeders" [ref=f1e29] [cursor=pointer]
+          - button "Motor starter modules" [ref=f1e31] [cursor=pointer]
+          - button "Ventilation and finish" [ref=f1e33] [cursor=pointer]
+        - generic:
+          - article:
+            - button "Zoom out": ×
+            - generic: 1 of 6
+            - heading "Air circuit breaker incomer" [level=2]
+            - paragraph: The ACB takes supply from your transformer or DG and protects the whole board. It racks out on its drawout chassis for maintenance, without opening the busbar chamber.
+            - generic: 630 A to 6300 A, 50 kA and above
+            - generic:
+              - button "← Previous" [disabled]
+              - button "Next →"
+          - article:
+            - button "Zoom out": ×
+            - generic: 2 of 6
+            - heading "Metering and indication" [level=2]
+            - paragraph: Multifunction meters, phase indication lamps and selector switches on the incomer door show voltage, current, power factor and energy at a glance.
+            - generic: Modbus-ready meters on request
+            - generic:
+              - button "← Previous"
+              - button "Next →"
+          - article:
+            - button "Zoom out": ×
+            - generic: 3 of 6
+            - heading "Busbar chamber" [level=2]
+            - paragraph: Copper or aluminium busbars run the full length of the lineup in a segregated top chamber, on insulated supports sized for your short-circuit level.
+            - generic: Form 2 to Form 4b separation
+            - generic:
+              - button "← Previous"
+              - button "Next →"
+          - article:
+            - button "Zoom out": ×
+            - generic: 4 of 6
+            - heading "Outgoing feeders" [level=2]
+            - paragraph: Each feeder has its own lockable door, protection relay and meter, so one circuit can be isolated while the rest stay live.
+            - generic: MCCB or ACB outgoings
+            - generic:
+              - button "← Previous"
+              - button "Next →"
+          - article:
+            - button "Zoom out": ×
+            - generic: 5 of 6
+            - heading "Motor starter modules" [level=2]
+            - paragraph: Compact compartments for DOL and star-delta starters. Each module slides out on its own, so you can swap a starter without shutting down the section.
+            - generic: Fixed or drawout modules
+            - generic:
+              - button "← Previous"
+              - button "Next →"
+          - article:
+            - button "Zoom out": ×
+            - generic: 6 of 6
+            - heading "Ventilation and finish" [level=2]
+            - paragraph: Filtered louvres keep internal temperatures in check. The CRCA steel enclosure is powder-coated, RAL 7035 unless you specify otherwise.
+            - generic: IP42 to IP54 indoor enclosures
+            - generic:
+              - button "← Previous"
+              - button "Next →" [disabled]
+    - generic [ref=f1e35]:
+      - generic [ref=f1e36]:
+        - heading "One factory, the full LT range." [level=2] [ref=f1e37]
+        - paragraph [ref=f1e38]: Every lineup starts from your single-line diagram and load list. We size busbars, breakers and enclosures to your fault level, then build to IEC 61439 and IS 8623.
+      - list [ref=f1e39]:
+        - listitem [ref=f1e40]:
+          - heading "Power control centre PCC" [level=3] [ref=f1e41]:
+            - text: Power control centre
+            - generic [ref=f1e42]: PCC
+          - paragraph [ref=f1e43]: Main incoming and distribution from transformer and DG sources, with ACB incomers, bus couplers and interlocking.
+          - generic [ref=f1e44]: Up to 6300 A
+        - listitem [ref=f1e45]:
+          - heading "Motor control centre MCC" [level=3] [ref=f1e46]:
+            - text: Motor control centre
+            - generic [ref=f1e47]: MCC
+          - paragraph [ref=f1e48]: DOL, star-delta, soft starter and VFD feeders in fixed or drawout modules, with remote control and status wiring.
+          - generic [ref=f1e49]: Up to 4000 A
+        - listitem [ref=f1e50]:
+          - heading "Power factor correction APFC" [level=3] [ref=f1e51]:
+            - text: Power factor correction
+            - generic [ref=f1e52]: APFC
+          - paragraph [ref=f1e53]: Automatic capacitor banks with a relay controller, detuned reactors and contactor switching to cut reactive power charges.
+          - generic [ref=f1e54]: 50 to 1000 kVAr
+        - listitem [ref=f1e55]:
+          - heading "Distribution boards MLDB, PDB, SDB" [level=3] [ref=f1e56]:
+            - text: Distribution boards
+            - generic [ref=f1e57]: MLDB, PDB, SDB
+          - paragraph [ref=f1e58]: Main and sub distribution for lighting and power circuits in buildings, hospitals and campuses.
+          - generic [ref=f1e59]: Up to 1600 A
+        - listitem [ref=f1e60]:
+          - heading "AMF and synchronising DG panels" [level=3] [ref=f1e61]:
+            - text: AMF and synchronising
+            - generic [ref=f1e62]: DG panels
+          - paragraph [ref=f1e63]: Automatic mains failure changeover and multi-DG synchronising with load sharing controllers.
+          - generic [ref=f1e64]: Up to 4000 A
+        - listitem [ref=f1e65]:
+          - heading "Feeder pillars Outdoor" [level=3] [ref=f1e66]:
+            - text: Feeder pillars
+            - generic [ref=f1e67]: Outdoor
+          - paragraph [ref=f1e68]: Weatherproof enclosures for street lighting, townships and site distribution.
+          - generic [ref=f1e69]: IP55 enclosure
+    - generic [ref=f1e70]:
+      - generic [ref=f1e71]:
+        - heading "From drawing to commissioning." [level=2] [ref=f1e72]
+        - paragraph [ref=f1e73]: You get approval drawings before we cut steel, and an open invitation to witness the tests before we ship.
+      - list [ref=f1e74]:
+        - listitem [ref=f1e75]:
+          - heading "Review" [level=3] [ref=f1e76]
+          - paragraph [ref=f1e77]: We study your SLD, load list and site conditions, and flag anything that needs a second look.
+        - listitem [ref=f1e78]:
+          - heading "Engineering" [level=3] [ref=f1e79]
+          - paragraph [ref=f1e80]: GA drawings, wiring diagrams and a bill of materials, sent to you for approval.
+        - listitem [ref=f1e81]:
+          - heading "Fabrication" [level=3] [ref=f1e82]
+          - paragraph [ref=f1e83]: CRCA sheet steel is cut, bent, welded and powder-coated in-house.
+        - listitem [ref=f1e84]:
+          - heading "Assembly" [level=3] [ref=f1e85]
+          - paragraph [ref=f1e86]: Busbars, switchgear and control wiring are fitted and ferruled to the approved drawings.
+        - listitem [ref=f1e87]:
+          - heading "Testing" [level=3] [ref=f1e88]
+          - paragraph [ref=f1e89]: High-voltage, insulation resistance and functional tests, with your team welcome to witness.
+        - listitem [ref=f1e90]:
+          - heading "Commissioning" [level=3] [ref=f1e91]
+          - paragraph [ref=f1e92]: Dispatch, installation support and on-site commissioning with a full test report.
+    - generic [ref=f1e93]:
+      - generic [ref=f1e94]:
+        - heading "Send us your single-line diagram." [level=2] [ref=f1e95]
+        - paragraph [ref=f1e96]: We'll come back with a GA drawing, a bill of materials and a price. Most enquiries get a first response within two working days.
+      - generic [ref=f1e97]:
+        - generic [ref=f1e98]:
+          - term [ref=f1e99]: Email
+          - definition [ref=f1e100]:
+            - link "sales@indway.in" [ref=f1e101] [cursor=pointer]:
+              - /url: mailto:sales@indway.in
+        - generic [ref=f1e102]:
+          - term [ref=f1e103]: Phone
+          - definition [ref=f1e104]:
+            - link "+91 00000 00000" [ref=f1e105] [cursor=pointer]:
+              - /url: tel:+910000000000
+        - link "Email your SLD" [ref=f1e106] [cursor=pointer]:
+          - /url: mailto:sales@indway.in?subject=LT%20panel%20enquiry
+  - contentinfo [ref=f1e107]:
+    - img "Indway" [ref=f1e108]
+    - generic [ref=f1e109]: © 2026 Indway. LT panel manufacturer.
