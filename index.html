@@ -3037,10 +3037,33 @@ function layout() {
 }
 
 /* ---------- Click to zoom ---------- */
-// 0 is the overview; 1..n zooms the camera onto that step's hotspot and shows its card
+// Eased page scroll: slow start, slow settle, longer for longer trips. Uses "instant" steps because
+// the page's CSS scroll-behavior: smooth would otherwise smooth each step again and make it lag.
+// Any wheel, touch or key input from the reader hands control straight back to them.
+let glideId = 0;
+function glide(to) {
+  to = clamp(to, 0, document.documentElement.scrollHeight - innerHeight);
+  const from = scrollY, dist = to - from;
+  cancelAnimationFrame(glideId);
+  if (Math.abs(dist) < 4) return;
+  if (reduce) { scrollTo({ top: to, behavior: "instant" }); return; }
+  const dur = clamp(500 + Math.abs(dist) * 0.45, 700, 1300), t0 = performance.now();
+  const easeInOut = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const step = (now) => {
+    const x = Math.min(1, (now - t0) / dur);
+    scrollTo({ top: from + dist * easeInOut(x), behavior: "instant" });
+    if (x < 1) glideId = requestAnimationFrame(step);
+  };
+  glideId = requestAnimationFrame(step);
+}
+for (const ev of ["wheel", "touchstart", "keydown"]) addEventListener(ev, () => cancelAnimationFrame(glideId), { passive: true });
+
+// 0 is the overview; 1..n zooms the camera onto that step's hotspot and shows its card.
+// Opening a point glides the page so the full-height stage fills the screen.
 let current = 0;
 function open(k) {
   current = clamp(k, 0, steps.length);
+  if (current > 0) glide(stage.getBoundingClientRect().top + scrollY);
   const act = current - 1;
   spots.forEach((s, i) => s.classList.toggle("is-active", i === act));
   caps.forEach((c, i) => c.classList.toggle("is-active", i === act));
@@ -3056,7 +3079,6 @@ addEventListener("keydown", (e) => {
 });
 document.querySelectorAll('a[href="#inside"]').forEach((a) => a.addEventListener("click", (e) => {
   e.preventDefault();
-  scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
   open(1);
 }));
 
@@ -3093,6 +3115,18 @@ addEventListener("pointermove", (e) => {
   mouse.y = e.clientY / innerHeight * 2 - 1;
 }, { passive: true });
 document.addEventListener("mouseleave", () => { mouse.x = mouse.y = 0; });
+
+// Touch screens have no cursor, so the lineup swerves with the page scroll instead: it turns
+// and tips a little as the stage scrolls away, and the frame loop's easing smooths the motion.
+const touch = matchMedia("(hover: none)");
+function scrollSwerve() {
+  if (!touch.matches) return;
+  const p = clamp(-stage.getBoundingClientRect().top / stage.clientHeight, 0, 1);
+  mouse.x = -Math.sin(p * Math.PI / 2) * 1.2;
+  mouse.y = p * 0.8;
+}
+addEventListener("scroll", scrollSwerve, { passive: true });
+scrollSwerve();
 
 let pose = null;
 // Moving parts ease toward open only while their step is showing

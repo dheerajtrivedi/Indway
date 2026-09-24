@@ -154,7 +154,6 @@
         <canvas id="netGl" aria-label="3D model of a site's LT system. A transformer and a DG set feed a PCC panel. The PCC feeds an MCC running a pump, a cooling fan and a conveyor, an APFC panel, a lighting distribution board feeding high-bay lights and a CNC machine, and a feeder pillar running street lights."></canvas>
         <div class="net__tags" id="netTags"></div>
         <div class="net__chips" role="toolbar" aria-label="Show a panel">
-          <button type="button" data-id="all" aria-pressed="true">Whole system</button>
           <button type="button" data-id="pcc" aria-pressed="false">PCC</button>
           <button type="button" data-id="mcc" aria-pressed="false">MCC</button>
           <button type="button" data-id="apfc" aria-pressed="false">APFC</button>
@@ -1200,7 +1199,7 @@ const LOADTAGS = [
 });
 
 const chips = [...document.querySelectorAll(".net__chips button")];
-chips.forEach((b) => b.addEventListener("click", () => { select(b.dataset.id); focusSection(); }));
+chips.forEach((b) => b.addEventListener("click", () => { select(sel === b.dataset.id ? "all" : b.dataset.id); focusSection(); }));
 let sel = "all", statusEl = null;
 function select(id) {
   sel = id;
