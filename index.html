@@ -20,6 +20,7 @@
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/geometries/RoundedBoxGeometry.js">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/environments/RoomEnvironment.js">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/objects/Reflector.js">
 <style>
   :root {
     --ground: #F4F4F3;
@@ -151,6 +152,8 @@
     display: grid; place-items: center;
     transition: opacity .3s;
   }
+  /* Lies flat on the panel's front face: frame() sets --face to that plane's on-screen foreshortening */
+  .spot b { position: absolute; inset: 0; display: grid; place-items: center; transform: var(--face, none); }
   .spot i {
     width: 9px; height: 9px; border-radius: 50%;
     background: var(--ground);
@@ -159,11 +162,41 @@
   }
   .spot:hover i { transform: scale(1.25); }
   .spot.is-active i { background: var(--arc); box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(212,83,31,.5); }
-  .spot.is-active::before {
+  .spot.is-active b::before {
     content: ""; position: absolute; inset: 13px; border-radius: 50%;
     border: 1.5px solid var(--arc);
     animation: ping 1.8s ease-out infinite;
   }
+  /* Hovering "See inside the panel" lights up every hotspot, one after another */
+  .spots.is-preview .spot i { background: var(--arc); box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(212,83,31,.5); transform: scale(1.25); transition-delay: calc(var(--i) * 60ms); }
+  .spots.is-preview .spot b::before {
+    content: ""; position: absolute; inset: 13px; border-radius: 50%;
+    border: 1.5px solid var(--arc);
+    animation: ping 1.8s ease-out infinite; animation-delay: calc(var(--i) * 120ms);
+  }
+  /* ...and lays out each point's card beside the panel, joined to its hotspot by a leader line */
+  .leads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .leads path {
+    fill: none; stroke: var(--arc); stroke-width: 1.25;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+    transition: stroke-dashoffset .2s;
+  }
+  .spots.is-preview { z-index: 7; }
+  .nav, .hero-head, .hero-copy p, .hero-copy .btn { transition: filter .35s, opacity .35s, background .2s, color .2s; }
+  .is-previewing :is(.nav, .hero-head, .hero-copy p, .hero-copy .btn:not(#tourLink)) { filter: blur(6px); opacity: .45; }
+  .spots.is-preview .leads path { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.3,.7,.3,1) calc(var(--i) * 60ms); }
+  .callout {
+    position: absolute; left: 0; top: 0;
+    padding: 11px 14px; border: 0; border-radius: 12px; cursor: pointer; text-align: left;
+    background: rgba(255,255,255,.82);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 12px 28px -14px rgba(38,38,38,.35);
+    color: var(--ink); font: 600 14px/1.3 "Archivo", system-ui, sans-serif;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, box-shadow .2s;
+  }
+  .callout:hover { box-shadow: inset 0 0 0 1.5px var(--arc), 0 12px 28px -14px rgba(38,38,38,.35); }
+  .spots.is-preview .callout.is-placed { opacity: 1; pointer-events: auto; transition: opacity .3s calc(var(--i) * 60ms + 180ms), box-shadow .2s; }
   @keyframes ping { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.1); opacity: 0; } }
 
   .captions {
@@ -346,7 +379,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .spot.is-active::before { animation: none; }
+    .spot.is-active::before, .spots.is-preview .spot::before { animation: none; }
+    .leads path, .spots.is-preview .leads path, .callout, .spots.is-preview .callout.is-placed { transition: none; }
     .caption { transition: none; }
     .loader .ln, .loader .lamp { animation: none; stroke-dasharray: none; }
   }
@@ -373,7 +407,7 @@
           <p class="hero-sub">Custom LT panels, engineered and tested in-house.</p>
         </div>
         <div>
-          <p>PCC, MCC, APFC and distribution panels for plants, buildings and infrastructure, wired, tested and documented on our floor before they ship.</p>
+          <p>From standard power distribution to complex industrial applications, we build LT panels engineered around your project requirements. Whether you’re a factory owner, EPC contractor or electrical consultant, talk to our team for a panel solution tailored to your application.</p>
           <div class="actions">
             <a class="btn" href="#contact">Request a quote</a>
             <a class="btn btn--ghost" href="#inside" id="tourLink">See inside the panel</a>
@@ -626,6 +660,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { Reflector } from "three/addons/objects/Reflector.js";
 
 const $ = (s) => document.querySelector(s);
 const scene = $("#scene"), stage = $("#stage"), canvas = $("#gl");
@@ -671,7 +706,7 @@ sun.shadow.mapSize.setScalar(hiQ ? 2048 : 1024);
 Object.assign(sun.shadow.camera, { left: -3.6, right: 3.6, top: 3.2, bottom: -1.6, near: 2, far: 14 });
 sun.shadow.bias = -0.0002;
 sun.shadow.normalBias = 0.004;
-sun.shadow.radius = 3;
+sun.shadow.radius = 5;
 world.add(sun);
 // Cool fill from the right lifts the shadow side; a low rim separates the roof from the background
 const fill = new THREE.DirectionalLight(0xE6ECF5, 0.35);
@@ -2596,7 +2631,7 @@ sections.forEach((sec, si) => {
     selector(upper, dw / 2, 0.12, si !== 3 ? "R" : "OFF");
     if (si === 1) anchors.feeder = [upper, dw / 2, 0.42, T + 0.05];
     // On the closed cover's face; the frame loop sinks it onto the bars as the covers open
-    if (si === 2) anchors.busbar = [g, cx - w * 0.15, y0 + BH - CH + BUS_Y + BAR_H / 2, FZ + T + 0.01];
+    if (si === 2) anchors.busbar = [g, cx, y0 + BH - CH + BUS_Y + BAR_H / 2, FZ + T + 0.01];
   }
 
   if (sec.type === "mcc") {
@@ -2706,42 +2741,96 @@ const fadeTex = canvasTex(256, 256, (g, s) => {
   g.fillStyle = r; g.fillRect(0, 0, s, s);
 }, false);
 
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE), new THREE.MeshStandardMaterial({
-  map: tileTex, alphaMap: fadeTex, transparent: true, roughness: 0.55, metalness: 0, envMapIntensity: 0.3,
-}));
+// Polished glazed porcelain. A planar mirror renders the scene reflected in the floor at half resolution;
+// it draws nothing itself (its only job is the reflection pass) and goes first so the floor samples this
+// frame's image. The floor blends it in with a small blur, as a glossy but not mirror-perfect glaze would.
+const mirror = new Reflector(new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE), { clipBias: 0.003 });
+mirror.rotation.x = -Math.PI / 2;
+mirror.material.colorWrite = mirror.material.depthWrite = false;
+mirror.renderOrder = -3;
+world.add(mirror);
+const reflTexel = { value: new THREE.Vector2(1 / 512, 1 / 512) };
+const floorMat = new THREE.MeshStandardMaterial({
+  map: tileTex, alphaMap: fadeTex, transparent: true, roughness: 0.16, metalness: 0, envMapIntensity: 0.45,
+});
+floorMat.onBeforeCompile = (sh) => {
+  sh.uniforms.tReflect = { value: mirror.getRenderTarget().texture };
+  sh.uniforms.reflMatrix = mirror.material.uniforms.textureMatrix;
+  sh.uniforms.reflTexel = reflTexel;
+  sh.vertexShader = sh.vertexShader
+    .replace("#include <common>", "#include <common>\nuniform mat4 reflMatrix;\nvarying vec4 vReflUv;\nvarying vec3 vFloorP;")
+    .replace("#include <project_vertex>", `#include <project_vertex>
+vFloorP = (modelMatrix * vec4(transformed, 1.0)).xyz;
+vReflUv = reflMatrix * vec4(transformed, 1.0); // the matrix already carries the mirror's (= floor's) placement`);
+  sh.fragmentShader = sh.fragmentShader
+    .replace("#include <common>", `#include <common>
+uniform sampler2D tReflect;
+uniform vec2 reflTexel;
+varying vec4 vReflUv;
+varying vec3 vFloorP;`)
+    .replace("#include <opaque_fragment>", `
+{
+  // Reflection softens the further it is from what it mirrors, like a real glaze
+  vec2 uv = vReflUv.xy / vReflUv.w;
+  float d = length(max(abs(vFloorP.xz) - vec2(${(total / 2).toFixed(3)}, ${(D / 2).toFixed(3)}), 0.0));
+  vec2 r = reflTexel * mix(1.5, 5.0, clamp(d / 1.2, 0.0, 1.0));
+  vec3 refl = texture2D(tReflect, uv).rgb * 0.2
+    + (texture2D(tReflect, uv + r * vec2( 1.0,  0.0)).rgb + texture2D(tReflect, uv + r * vec2(-1.0,  0.0)).rgb
+     + texture2D(tReflect, uv + r * vec2( 0.0,  1.0)).rgb + texture2D(tReflect, uv + r * vec2( 0.0, -1.0)).rgb) * 0.12
+    + (texture2D(tReflect, uv + r * vec2( 1.4,  1.4)).rgb + texture2D(tReflect, uv + r * vec2(-1.4,  1.4)).rgb
+     + texture2D(tReflect, uv + r * vec2( 1.4, -1.4)).rgb + texture2D(tReflect, uv + r * vec2(-1.4, -1.4)).rgb) * 0.08;
+  // Glancing views reflect more (Fresnel); matte grout joints barely reflect; it fades out away from the lineup
+  float cosV = abs(dot(normalize(vViewPosition), normal));
+  float fres = 0.04 + 0.96 * pow(1.0 - cosV, 5.0);
+  float glaze = smoothstep(0.55, 0.8, diffuseColor.r);
+  float k = clamp(0.6 + fres * 0.4, 0.0, 0.85) * glaze * (1.0 - smoothstep(0.5, 3.0, d));
+  outgoingLight = mix(outgoingLight, refl, k);
+}
+#include <opaque_fragment>`);
+};
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE), floorMat);
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
 floor.renderOrder = -2; // draw under the shadow layers
 world.add(floor);
 // The fill and rim lights cast no shadows and would wash the key's shadow out of the lit floor;
 // a catcher layered on top keeps it legible
-const catcher = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.ShadowMaterial({ opacity: 0.2, depthWrite: false }));
+const catcher = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.ShadowMaterial({ opacity: 0.34, depthWrite: false }));
 catcher.rotation.x = -Math.PI / 2; catcher.position.y = 0.001; catcher.receiveShadow = true;
 world.add(catcher);
 
-const contactTex = canvasTex(256, 256, (g, s) => {
-  const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-  r.addColorStop(0, "rgba(0,0,0,.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
-  g.fillStyle = r; g.fillRect(0, 0, s, s);
-});
-const contact = new THREE.Mesh(new THREE.PlaneGeometry(total + 1.2, D + 1.2),
-  new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, toneMapped: false }));
-contact.rotation.x = -Math.PI / 2; contact.position.y = 0.003;
-world.add(contact);
+// Baked floor occlusion around the plinth's footprint. Each layer is a blurred rectangle the size of the
+// footprint: only its canvas shadow is drawn (the rect sits off-canvas and the shadow is offset back in),
+// so the edge fades both inward and outward instead of stopping at a hard core.
+function footprintShadow(w, d, margin, px, layers, y, order) {
+  const tex = canvasTex(Math.round((w + 2 * margin) * px), Math.round((d + 2 * margin) * px), (g, cw) => {
+    g.fillStyle = "#000"; g.shadowOffsetX = cw;
+    for (const [alpha, blur, grow] of layers) {
+      g.shadowColor = `rgba(0,0,0,${alpha})`; g.shadowBlur = blur * px;
+      g.fillRect((margin - grow) * px - cw, (margin - grow) * px, (w + 2 * grow) * px, (d + 2 * grow) * px);
+    }
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w + 2 * margin, d + 2 * margin),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = y; m.renderOrder = order;
+  world.add(m);
+  return m;
+}
+// Broad skylight occlusion: a heavy 2 m cabinet hides a wide band of floor from the room, darkest under
+// its own footprint and fading out over roughly half a metre
+footprintShadow(total, D, 1.0, 96, [[0.4, 0.8, 0.15], [0.35, 0.3, 0.04]], 0.003, 0);
+// Contact line: near-black where the plinth meets the floor, tightening to a crisp crease right at the base
+footprintShadow(total + 0.01, D + 0.01, 0.16, 320, [[0.5, 0.12, 0.02], [0.85, 0.03, 0.002]], 0.004, 1);
 
-// Tight, near-solid occlusion line right at the plinth so the lineup sits on the floor
-const FOOT_W = total + 0.04, FOOT_D = D + 0.02, FOOT_M = 0.1, FOOT_PX = 256;
-const footTex = canvasTex(Math.round((FOOT_W + 2 * FOOT_M) * FOOT_PX), Math.round((FOOT_D + 2 * FOOT_M) * FOOT_PX), (g, w) => {
-  // Only the blurred shadow is drawn: the rect sits off-canvas and its shadow is offset back in,
-  // so the edge fades both inward and outward instead of stopping at a hard core
-  g.fillStyle = "#000"; g.shadowColor = "rgba(0,0,0,.4)";
-  g.shadowBlur = 0.06 * FOOT_PX; // ~6 cm feather
-  g.shadowOffsetX = w;
-  g.fillRect(FOOT_M * FOOT_PX - w, FOOT_M * FOOT_PX, FOOT_W * FOOT_PX, FOOT_D * FOOT_PX);
-});
-const foot = new THREE.Mesh(new THREE.PlaneGeometry(FOOT_W + 2 * FOOT_M, FOOT_D + 2 * FOOT_M),
-  new THREE.MeshBasicMaterial({ map: footTex, transparent: true, depthWrite: false, toneMapped: false }));
-foot.rotation.x = -Math.PI / 2; foot.position.y = 0.004; foot.renderOrder = 1;
-world.add(foot);
+// The floor and its shadow layers lie in the mirror plane: keep them out of the reflected image
+{
+  const flat = world.children.filter((o) => o.isMesh && o !== mirror && o.position.y < 0.01 && o.rotation.x === -Math.PI / 2);
+  const reflect = mirror.onBeforeRender;
+  mirror.onBeforeRender = function (...a) {
+    flat.forEach((o) => (o.visible = false));
+    reflect.apply(this, a);
+    flat.forEach((o) => (o.visible = true));
+  };
+}
 
 root.updateMatrixWorld(true);
 const anchorPos = {};
@@ -2807,10 +2896,30 @@ const spots = steps.map((s, i) => {
   const b = document.createElement("button");
   b.className = "spot";
   b.setAttribute("aria-label", s.title);
-  b.innerHTML = "<i></i>";
+  b.innerHTML = "<b><i></i></b>";
+  b.style.setProperty("--i", i);
   b.addEventListener("click", (e) => { e.stopPropagation(); open(i + 1); });
   spotWrap.appendChild(b);
   return b;
+});
+const leads = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+leads.classList.add("leads");
+leads.setAttribute("aria-hidden", "true");
+spotWrap.prepend(leads);
+const callouts = steps.map((s, i) => {
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("pathLength", "1");
+  path.style.setProperty("--i", i);
+  leads.appendChild(path);
+  const b = document.createElement("button");
+  b.className = "callout";
+  b.type = "button";
+  b.tabIndex = -1;
+  b.style.setProperty("--i", i);
+  b.textContent = s.title;
+  b.addEventListener("click", (e) => { e.stopPropagation(); open(i + 1); });
+  spotWrap.appendChild(b);
+  return { b, path, x: 0, y: 0 };
 });
 const caps = steps.map((s, i) => {
   const d = document.createElement("article");
@@ -2841,6 +2950,9 @@ function layout() {
   mobile = W < 820;
   renderer.setSize(W, H, false);
   camera.aspect = W / H;
+  const rw = Math.round(W * renderer.getPixelRatio() / 2), rh = Math.round(H * renderer.getPixelRatio() / 2);
+  mirror.getRenderTarget().setSize(rw, rh);
+  reflTexel.value.set(1 / rw, 1 / rh);
 
   // Opening shot: fit the whole lineup into the space under the headline
   const top = heroCopy.offsetTop + heroCopy.offsetHeight + (mobile ? 16 : 24);
@@ -2881,6 +2993,31 @@ document.querySelectorAll('a[href="#inside"]').forEach((a) => a.addEventListener
   open(1);
 }));
 
+// Hovering "See inside the panel" previews every point: hotspots light up and their cards fan out beside the panel.
+// The preview holds while the pointer crosses onto a card, so the cards can be clicked.
+const tourLink = $("#tourLink");
+let previewing = false, previewOff;
+function preview(on) {
+  clearTimeout(previewOff);
+  if (!on) { previewOff = setTimeout(() => preview.set(false), 180); return; }
+  preview.set(!current);
+}
+preview.set = (on) => {
+  if (on && !previewing) slotOf = null;
+  previewing = on;
+  spotWrap.classList.toggle("is-preview", on);
+  document.documentElement.classList.toggle("is-previewing", on);
+  dirty = true;
+};
+for (const el of [tourLink, ...callouts.map((c) => c.b)]) {
+  el.addEventListener("mouseenter", () => preview(true));
+  el.addEventListener("mouseleave", () => preview(false));
+}
+tourLink.addEventListener("focus", () => preview(true));
+tourLink.addEventListener("blur", () => preview(false));
+tourLink.addEventListener("click", () => preview.set(false));
+spotWrap.addEventListener("click", () => preview.set(false));
+
 /* ---------- Input: cursor orbit ---------- */
 const mouse = { x: 0, y: 0 }, m = { x: 0, y: 0 };
 addEventListener("pointermove", (e) => {
@@ -2893,7 +3030,7 @@ document.addEventListener("mouseleave", () => { mouse.x = mouse.y = 0; });
 let pose = null;
 // Moving parts ease toward open only while their step is showing
 const part = { acb: 0, doors: 0, drawer: 0, zoom: 0 };
-const v = new THREE.Vector3();
+const v = new THREE.Vector3(), vx = new THREE.Vector3(), vy = new THREE.Vector3();
 
 // Only draw while the scene is on screen
 let onScreen = true;
@@ -2907,6 +3044,74 @@ function approach(obj, key, target, f) {
   if (v === target) return false;
   obj[key] = Math.abs(target - v) < EPS ? target : lerp(v, target, f);
   return true;
+}
+
+// Cards ring the lineup in six slots (two above, one each side, two below). Each hotspot takes the slot that keeps
+// the leaders shortest overall, which also keeps them from crossing. The match is made once per preview so cards
+// don't swap places as the camera sways with the cursor.
+let lineupBox, slotOf = null;
+const corner = new THREE.Vector3();
+const SLOTS = [
+  (L, T, R, B, w, h, g) => [(L + R) / 2 - 8 - w, T - g - h],         // above, left
+  (L, T, R, B, w, h, g) => [(L + R) / 2 + 8, T - g - h],             // above, right
+  (L, T, R, B, w, h, g) => [L - g - w, T + (B - T) * 0.4 - h / 2],   // left
+  (L, T, R, B, w, h, g) => [R + g, T + (B - T) * 0.4 - h / 2],       // right
+  (L, T, R, B, w, h, g) => [L + (R - L) * 0.12 - w, B + g],          // below, left
+  (L, T, R, B, w, h, g) => [R - (R - L) * 0.12, B + g],              // below, right
+];
+function permutations(n) {
+  if (n === 1) return [[0]];
+  return permutations(n - 1).flatMap((p) => Array.from({ length: n }, (_, k) => [...p.slice(0, k), n - 1, ...p.slice(k)]));
+}
+const PERMS = permutations(SLOTS.length);
+
+function placeCallouts() {
+  lineupBox ||= new THREE.Box3().setFromObject(root);
+  let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
+  for (let c = 0; c < 8; c++) {
+    corner.set(c & 1 ? lineupBox.max.x : lineupBox.min.x, c & 2 ? lineupBox.max.y : lineupBox.min.y, c & 4 ? lineupBox.max.z : lineupBox.min.z).project(camera);
+    const x = (corner.x + 1) / 2 * W, y = (1 - corner.y) / 2 * H;
+    L = Math.min(L, x); R = Math.max(R, x); T = Math.min(T, y); B = Math.max(B, y);
+  }
+  const gutter = heroCopy.offsetLeft, gap = 28, width = 250;
+  const fits = !mobile;
+  const nav = document.querySelector(".nav").offsetHeight + 12;
+
+  // Slot rectangles, pulled back inside the viewport (overlapping the hero copy or the lineup is fine)
+  const rects = SLOTS.map((slot) => {
+    const h = callouts[0].b.offsetHeight || 60;
+    let [x, y] = slot(L, T, R, B, width, h, gap);
+    x = clamp(x, gutter, W - gutter - width);
+    y = clamp(y, nav, H - 16 - h);
+    return { x, y };
+  });
+  callouts.forEach((c) => { c.b.style.width = `${width}px`; });
+  // Slide the pair above the lineup left, together, if it would cover the button being hovered
+  const btn = tourLink.getBoundingClientRect(), st = stage.getBoundingClientRect();
+  const [a, b] = rects, h0 = callouts[0].b.offsetHeight || 60;
+  if (b.y < btn.bottom - st.top && b.y + h0 > btn.top - st.top && b.x + width > btn.left - st.left - 12) {
+    const shift = b.x + width - (btn.left - st.left - 12);
+    b.x -= shift;
+    a.x = Math.max(gutter, Math.min(a.x, b.x - 12 - width));
+  }
+
+  if (!slotOf) {
+    let best = Infinity;
+    for (const p of PERMS) {
+      let cost = 0;
+      for (let i = 0; i < p.length; i++) cost += Math.hypot(rects[p[i]].x + width / 2 - callouts[i].x, rects[p[i]].y + 30 - callouts[i].y);
+      if (cost < best) { best = cost; slotOf = p; }
+    }
+  }
+
+  callouts.forEach((c, i) => {
+    const r = rects[slotOf[i]], h = c.b.offsetHeight;
+    c.b.style.transform = `translate(${r.x.toFixed(1)}px, ${r.y.toFixed(1)}px)`;
+    c.b.classList.toggle("is-placed", fits);
+    // Leader runs from the hotspot to the nearest point on the card's edge
+    const ex = clamp(c.x, r.x + 12, r.x + width - 12), ey = clamp(c.y, r.y, r.y + h);
+    c.path.setAttribute("d", fits ? `M${c.x.toFixed(1)},${c.y.toFixed(1)}L${ex.toFixed(1)},${ey.toFixed(1)}` : "");
+  });
 }
 
 function frame(time) {
@@ -2962,13 +3167,21 @@ function frame(time) {
     if (s.at === "acb") v.z += acbBody.position.z;
     if (s.at === "mcc") v.z += drawer.position.z - drawer.userData.z0;
     if (s.at === "busbar") v.z -= (FZ + T + 0.01 - BUS_Z0) * ease(part.doors); // lands on the R phase's front face
-    v.project(camera);
+    // Screen directions of the front face's right and down axes, scaled so the dot's longer side stays full size
+    vx.copy(v).x += 0.05; vy.copy(v).y -= 0.05;
+    v.project(camera); vx.project(camera); vy.project(camera);
     const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
+    const ax = (vx.x - v.x) * W, ay = (v.y - vx.y) * H, bx = (vy.x - v.x) * W, by = (v.y - vy.y) * H;
+    const len = Math.max(Math.hypot(ax, ay), Math.hypot(bx, by)) || 1;
     spots[i].style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+    spots[i].style.setProperty("--face", `matrix(${[ax, ay, bx, by].map((n) => (n / len).toFixed(3))},0,0)`);
+    callouts[i].x = x; callouts[i].y = y;
     const show = v.z < 1 && (current ? i === current - 1 : part.zoom < 0.3);
     spots[i].style.opacity = show ? 1 : 0;
     spots[i].style.pointerEvents = show ? "auto" : "none";
   });
+
+  if (previewing) placeCallouts();
 
   renderer.render(world, camera);
   if (!window.__glReady) {
