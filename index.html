@@ -1816,7 +1816,7 @@ function eStop(p, x, y) {
 // cabled to its base unit. Power wiring keeps the busbar phase colours from the rear stabs through the
 // breaker, the contactor and the current sensor; control gear sits on a DIN rail on the right, wired
 // through slotted trunking. Door space: origin at the door's bottom-left corner, inside face at z = 0.
-const DRAWER_TRAVEL = 0.38, TRAY_D = 0.49, TRAY_Y = 0.0135; // TRAY_Y: top of the tray floor
+const DRAWER_TRAVEL = 0.26, TRAY_D = 0.49, TRAY_Y = 0.0135; // TRAY_Y: top of the tray floor
 // The tray darkens as it runs back into the carcass mouth
 const trayShade = (m) => chamberShade(m, 0.52, 0.2);
 const moulded = (color, roughness = .55) =>
@@ -2072,6 +2072,49 @@ function starterTray(p, dw, dh) {
     [tx0 + (8 + k) * tw + tw / 2, tt + 0.016, bzc + 0.04], [tx0 + (8 + k) * tw + tw / 2, tt, bzc + 0.017]]));
 }
 
+// The compartment the tray runs in, behind the module's door: a pocket through the carcass lined with
+// galvanised partitions, the fixed half of each slide rail on the side walls, and at the back the
+// moulded barrier to the vertical busbars, its stab shutters dropped shut now the tray is withdrawn
+// and the control plug socket on the right. x0, y are the module's bottom-left corner in section space.
+const POCKET_D = 0.53, MCC_N = 7, MCC_OPEN = 3; // pocket depth; module count; which module slides out
+const POCKET = {
+  lining: chamberShade(std(0x9A9FA3, .55, .6)),
+  rail: chamberShade(std(0xB9BDC1, .35, .9)),
+  barrier: chamberShade(std(0x3B3E41, .7, 0)),
+  shutter: chamberShade(std(0x6A6F74, .55, 0)),
+  hole: chamberShade(std(0x0B0C0D, .9, 0)),
+};
+const pocketOpening = (x0, y, w, mh) => ({ x: x0 + w / 2, y: y + mh / 2, w: w - 0.012, h: mh - 0.012 });
+function starterPocket(p, x0, y, w, mh) {
+  const o = pocketOpening(x0, y, w, mh), zc = FZ - POCKET_D / 2, t = 0.002;
+  // Linings, a hair inside the cut faces of the carcass
+  for (const s of [-1, 1]) {
+    box(p, o.w, t, POCKET_D - 0.002, POCKET.lining, o.x, o.y + s * (o.h / 2 - t / 2 - 0.0005), zc - 0.001);
+    box(p, t, o.h - 0.002, POCKET_D - 0.002, POCKET.lining, o.x + s * (o.w / 2 - t / 2 - 0.0005), o.y, zc - 0.001);
+    // Fixed slide rail: a C-channel on the side wall, lined up with the tray's running rail
+    const rx = o.x + s * (o.w / 2 - 0.0035), ry = y + G + TRAY_Y + 0.03;
+    box(p, 0.004, 0.036, POCKET_D - 0.03, POCKET.rail, rx, ry, zc - 0.012, 0.0008);
+    box(p, 0.0015, 0.026, POCKET_D - 0.03, POCKET.hole, rx - s * 0.0018, ry, zc - 0.012);
+  }
+  // Rear barrier to the vertical busbars
+  const bz = FZ - POCKET_D + 0.002, dx = x0 + G; // door-space x origin in section space
+  box(p, o.w - 0.004, o.h - 0.004, 0.004, POCKET.barrier, o.x, o.y, bz);
+  const sy = y + G + TRAY_Y + 0.06;
+  for (const k of [-1, 0, 1]) {
+    const sx = dx + 0.14 + k * 0.0396;
+    box(p, 0.024, 0.05, 0.001, POCKET.hole, sx, sy, bz + 0.0025);
+    box(p, 0.02, 0.046, 0.003, POCKET.shutter, sx, sy, bz + 0.0035, 0.001);
+  }
+  // Warning triangle above the shutters
+  const warn = new THREE.Mesh(new THREE.PlaneGeometry(0.032, 0.028), ACB.danger);
+  warn.position.set(dx + 0.14, sy + 0.05, bz + 0.0025); p.add(warn);
+  // Control plug socket: black moulded block with two rows of pin holes
+  const cx = dx + 0.45, cy = y + G + TRAY_Y + 0.05;
+  box(p, 0.06, 0.03, 0.016, TRAY.black, cx, cy, bz + 0.01, 0.002);
+  for (let r = 0; r < 2; r++) for (let k = 0; k < 6; k++)
+    cyl(p, 0.0016, 0.001, POCKET.hole, cx - 0.02 + k * 0.008, cy - 0.006 + r * 0.012, bz + 0.018, 12);
+}
+
 /* ---------- The lineup ---------- */
 const sections = [
   { w: 1.0, type: "incomer" },
@@ -2102,6 +2145,12 @@ sections.forEach((sec, si) => {
     box(g, w - 0.002, BH - CH, rd, M.body, cx, yc, -D / 2 + rd / 2, 0.003);
     holedSlab(g, w - 0.002, BH - CH, ACB_CD, M.body, cx, yc, FZ - ACB_CD / 2,
       { x: 0, y: y0 + 0.4 + G + ACB_DOOR_Y - yc, ...ACB_OPEN });
+  } else if (sec.type === "mcc") {
+    // Pocket for the withdrawable starter tray
+    const yc = y0 + (BH - CH) / 2, rd = D - POCKET_D;
+    const o = pocketOpening(L, y0 + 0.25 + MCC_OPEN * (BH - CH - 0.25) / MCC_N, w, (BH - CH - 0.25) / MCC_N);
+    box(g, w - 0.002, BH - CH, rd, M.body, cx, yc, -D / 2 + rd / 2, 0.003);
+    holedSlab(g, w - 0.002, BH - CH, POCKET_D, M.body, cx, yc, FZ - POCKET_D / 2, { x: 0, y: o.y - yc, w: o.w, h: o.h });
   } else box(g, w - 0.002, BH - CH, D, M.body, cx, y0 + (BH - CH) / 2, 0, 0.003);
   box(g, w - 0.002, CH, 0.08, M.cavity, cx, y0 + BH - CH / 2, -D / 2 + 0.04);
   // Chamber floor and roof lining, back wall to just behind the cover
@@ -2162,18 +2211,19 @@ sections.forEach((sec, si) => {
   if (sec.type === "mcc") {
     const bot = door(g, L, y0, w, 0.25);
     vent(bot, bot.userData.dw / 2, 0.12, w * 0.6, 0.12);
-    const n = 7, mh = (BH - CH - 0.25) / n;
+    const n = MCC_N, mh = (BH - CH - 0.25) / n;
     for (let i = 0; i < n; i++) {
       const y = y0 + 0.25 + i * mh;
-      box(g, w - 0.012, mh - 0.012, 0.002, M.black, cx, y + mh / 2, FZ + 0.0005);
+      if (i === MCC_OPEN) starterPocket(g, L, y, w, mh);
+      else box(g, w - 0.012, mh - 0.012, 0.002, M.black, cx, y + mh / 2, FZ + 0.0005);
       const mod = door(g, L, y, w, mh, { slide: true });
       const { dw, dh } = mod.userData;
       // Only the module that slides out on the tour is fitted out; the rest never show their insides
-      if (i === 3) starterTray(mod, dw, dh);
+      if (i === MCC_OPEN) starterTray(mod, dw, dh);
       else box(mod, dw - 0.03, dh - 0.03, 0.5, M.body, dw / 2, dh / 2, -0.25);
       rotaryHandle(mod, 0.14, dh / 2);
       starterRelay(mod, 0.295, dh / 2, n - i);
-      if (i === 3) { drawer = mod; drawer.userData.z0 = mod.position.z; anchors.mcc = [mod, 0.14, dh / 2, T + 0.05]; }
+      if (i === MCC_OPEN) { drawer = mod; drawer.userData.z0 = mod.position.z; anchors.mcc = [mod, 0.14, dh / 2, T + 0.05]; }
     }
   }
 
