@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Playwright MCP screenshots, snapshots and logs
+.playwright-mcp/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.*
+
+# Dependencies (if a build step is added later)
+node_modules/

@@ -1,5 +1,0 @@
-[    2423ms] ReferenceError: rhBaseGeo is not defined
-    at rotaryHandle (http://localhost:8765/index.html:933:7)
-    at http://localhost:8765/index.html:1048:7
-    at Array.forEach (<anonymous>)
-    at http://localhost:8765/index.html:965:10
