@@ -135,19 +135,12 @@
 </header>
 
 <main>
-  <section class="phero phero--hub">
+  <section class="phero phero--hub" id="net">
     <div class="phero__copy">
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li aria-current="page">LT panels</li></ol></nav>
       <p class="eyebrow">Product range</p>
-      <h1 class="display">LT panels, designed and built in New Delhi.</h1>
-      <p class="lead">Every Indway lineup starts from your single-line diagram and load list. We size busbars, breakers and enclosures to your fault level, fabricate and wire in-house, and test before dispatch, building to IS 8623.</p>
-    </div>
-  </section>
-
-  <section class="net" id="net" aria-labelledby="net-h">
-    <div class="net__head">
-      <h2 id="net-h">How the range works together</h2>
-      <p>From the transformer to the last street light. Pick a panel to see what it powers.</p>
+      <h1 class="display">Every LT panel your site needs, from transformer to final load.</h1>
+      <p class="lead">PCC, MCC, APFC, distribution boards, AMF and DG synchronising panels and feeder pillars, all designed and built in-house in New Delhi to IS 8623. Pick a panel in the model to see what it powers, or go straight to the one you need below.</p>
     </div>
     <div class="net__wrap">
       <div class="net__stage" id="netStage">
@@ -259,7 +252,7 @@
   addEventListener("error", (e) => { if (e.error || e.target instanceof HTMLScriptElement) netFailed(); }, true);
 </script>
 <script type="module">
-// "How the range works together" (lt-panels/index.html): a site's LT system laid out on the floor.
+// Hero model (lt-panels/index.html): a site's LT system laid out on the floor.
 // A transformer and a DG set feed the PCC; the PCC feeds the MCC, APFC, lighting DB and feeder pillar,
 // and each of those is cabled to the loads it runs. Power pulses down the red cables and switches each
 // load on as it arrives. Picking a panel frames it with what it powers; picking AMF fails the mains so
@@ -1263,21 +1256,19 @@ function layout() {
 }
 new ResizeObserver(layout).observe(stage);
 
-// On wide screens the heading and model together are sized to exactly one screen below the nav, so
-// focusSection() can bring the whole section into view. Picking anything smooth-scrolls it there.
-const navEl = $(".nav"), headEl = $(".net__head");
+// On wide screens the model sits beside the heading and fills the first screen down to its bottom edge,
+// and focusSection() brings it back into view. Picking anything smooth-scrolls it there.
+const navEl = $(".nav");
 const GAP_TOP = 12, GAP_BOTTOM = 16;
 function sizeStage() {
-  const fillable = matchMedia("(min-width: 821px)").matches;
-  const h = innerHeight - navEl.offsetHeight - GAP_TOP - headEl.offsetHeight - parseFloat(getComputedStyle(headEl).marginBottom) - GAP_BOTTOM;
+  const fillable = matchMedia("(min-width: 961px)").matches;
+  const h = innerHeight - (stage.getBoundingClientRect().top + scrollY) - GAP_BOTTOM;
   wrap.style.setProperty("--net-fill", fillable ? `${Math.round(clamp(h, 420, 1000))}px` : "");
 }
 sizeStage();
 addEventListener("resize", sizeStage);
 function focusSection() {
-  // Phones: the card sits below the model, so bring the model itself up under the nav
-  const el = matchMedia("(min-width: 821px)").matches ? headEl : stage;
-  const top = el.getBoundingClientRect().top + scrollY - navEl.offsetHeight - GAP_TOP;
+  const top = stage.getBoundingClientRect().top + scrollY - navEl.offsetHeight - GAP_TOP;
   glide(top);
 }
 // Eased page scroll: slow start, slow settle, longer for longer trips. Uses "instant" steps because

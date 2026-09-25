@@ -68,8 +68,14 @@ a { color: inherit; }
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px 64px;
   align-items: end;
 }
-.phero--hub { grid-template-columns: 1fr; }
+.phero--hub { grid-template-columns: 1fr; padding-top: clamp(84px, 11vh, 118px); }
 .phero--hub h1 { max-width: 18ch; }
+@media (min-width: 961px) {
+  .phero--hub { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); align-items: start; gap: 40px 48px; }
+  .phero--hub .phero__copy { align-self: center; }
+  .phero.phero--hub h1 { font-size: clamp(32px, 3.3vw, 54px); }
+  .no-gl .phero--hub { grid-template-columns: 1fr; }
+}
 .crumbs ol { list-style: none; margin: 0 0 28px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; font-size: 14px; color: var(--graphite); }
 .crumbs li + li::before { content: "/"; margin-right: 6px; color: var(--steel); }
 .crumbs a { text-decoration: none; }
@@ -265,11 +271,7 @@ footer img { height: 20px; width: auto; }
   .others a { transition: none; }
 }
 
-/* ---------- System model (hub page) ---------- */
-.net { padding: clamp(48px, 7vw, 88px) var(--gutter) 0; }
-.net__head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 48px; margin-bottom: 20px; }
-.net__head h2 { margin: 0; font-size: clamp(24px, 2.6vw, 36px); font-stretch: 112%; font-weight: 800; letter-spacing: -0.015em; line-height: 1.1; }
-.net__head p { margin: 0; max-width: 44ch; color: var(--graphite); }
+/* ---------- System model (hub page hero) ---------- */
 .net__wrap { position: relative; }
 .net__stage {
   position: relative; overflow: hidden;
@@ -280,7 +282,7 @@ footer img { height: 20px; width: auto; }
 }
 #netGl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s; touch-action: pan-y; cursor: grab; }
 .net-ready #netGl { opacity: 1; }
-.no-gl .net { display: none; }
+.no-gl .net__wrap { display: none; }
 .net__loading {
   position: absolute; inset: 0; margin: 0; display: grid; place-items: center;
   font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--graphite);

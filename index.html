@@ -168,13 +168,13 @@
     transition: background .25s, transform .25s;
   }
   .spot:hover i { transform: scale(1.25); }
-  .spot.is-active i { background: var(--arc); box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(212,83,31,.5); }
-  .spot.is-active b::before {
+  .spot:is(.is-active, .is-hinted) i { background: var(--arc); box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(212,83,31,.5); }
+  .spot:is(.is-active, .is-hinted) b::before {
     content: ""; position: absolute; inset: 13px; border-radius: 50%;
     border: 1.5px solid var(--arc);
     animation: ping 1.8s ease-out infinite;
   }
-  /* Hovering "See inside the panel" lights up every hotspot, one after another */
+  /* Hovering "Why choose us" lights up every hotspot, one after another */
   .spots.is-preview .spot i { background: var(--arc); box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(212,83,31,.5); transform: scale(1.25); transition-delay: calc(var(--i) * 60ms); }
   .spots.is-preview .spot b::before {
     content: ""; position: absolute; inset: 13px; border-radius: 50%;
@@ -204,6 +204,37 @@
   }
   .callout:hover { box-shadow: inset 0 0 0 1.5px var(--arc), 0 12px 28px -14px rgba(38,38,38,.35); }
   .spots.is-preview .callout.is-placed { opacity: 1; pointer-events: auto; transition: opacity .3s calc(var(--i) * 60ms + 180ms), box-shadow .2s; }
+  /* Ghost cursor: glides onto a hotspot and presses it, to show first-time visitors the points can be clicked */
+  .ghost { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .4s; }
+  .ghost.is-on { opacity: 1; }
+  /* Arrow tip sits on the ghost's origin */
+  .ghost svg {
+    display: block; width: 18px; height: 18px; margin: -2.25px 0 0 -3.75px; overflow: visible;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.12)) drop-shadow(0 4px 8px rgba(38,38,38,.22));
+    transform-origin: 3.75px 2.25px; transition: transform .14s cubic-bezier(.3,.7,.3,1);
+  }
+  .ghost path { fill: #fff; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+  .ghost.is-press svg { transform: scale(.86); }
+  /* Click ripple spreading from the tip */
+  .ghost i {
+    position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--arc); opacity: 0;
+  }
+  .ghost.is-clicked i { animation: ghost-ripple .7s cubic-bezier(.2,.7,.3,1); }
+  @keyframes ghost-ripple { from { transform: scale(.25); opacity: .9; } to { transform: scale(1.5); opacity: 0; } }
+  /* Frosted chip, in the callout cards' style, that settles in once the point is pressed */
+  .ghost span {
+    position: absolute; left: 16px; top: 20px; white-space: nowrap;
+    padding: 7px 11px; border-radius: 999px;
+    background: rgba(255,255,255,.82);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 10px 22px -12px rgba(38,38,38,.4);
+    color: var(--ink); font: 600 12px/1 "Archivo", system-ui, sans-serif; letter-spacing: .01em;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity .3s, transform .4s cubic-bezier(.3,.7,.3,1);
+  }
+  .ghost.is-tip span { opacity: 1; transform: none; }
+  .spots.is-preview .ghost { opacity: 0; }
   @keyframes ping { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.1); opacity: 0; } }
 
   .captions {
@@ -397,6 +428,8 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .spot.is-active::before, .spots.is-preview .spot::before { animation: none; }
+    .ghost, .ghost svg, .ghost span { transition: none; }
+    .ghost.is-clicked i { animation: none; }
     .leads path, .spots.is-preview .leads path, .callout, .spots.is-preview .callout.is-placed { transition: none; }
     .caption { transition: none; }
     .loader .ln, .loader .lamp { animation: none; stroke-dasharray: none; }
@@ -453,7 +486,7 @@
 <header class="nav">
   <a class="nav__logo" href="#top" aria-label="Indway home"><img src="assets/indway-logo.webp" alt="Indway" width="640" height="130"></a>
   <nav class="nav__links" aria-label="Main">
-    <a href="#inside">Inside the panel</a>
+    <a href="#inside">Why choose us</a>
     <a href="#range">Range</a>
     <a href="#process">How we build</a>
     <a class="btn" href="#contact">Request a quote</a>
@@ -472,7 +505,7 @@
           <p>From standard power distribution to complex industrial applications, we build LT panels engineered around your project requirements. Whether you’re a factory owner, EPC contractor or electrical consultant, talk to our team for a panel solution tailored to your application.</p>
           <div class="actions">
             <a class="btn" href="#contact">Request a quote</a>
-            <a class="btn btn--ghost" href="#inside" id="tourLink">See inside the panel</a>
+            <a class="btn btn--ghost" href="#inside" id="tourLink">Why choose us</a>
           </div>
         </div>
       </div>
@@ -3082,7 +3115,7 @@ document.querySelectorAll('a[href="#inside"]').forEach((a) => a.addEventListener
   open(1);
 }));
 
-// Hovering "See inside the panel" previews every point: hotspots light up and their cards fan out beside the panel.
+// Hovering "Why choose us" or any hotspot previews every point: hotspots light up and their cards fan out beside the panel.
 // The preview holds while the pointer crosses onto a card, so the cards can be clicked.
 const tourLink = $("#tourLink");
 let previewing = false, previewOff;
@@ -3098,7 +3131,7 @@ preview.set = (on) => {
   document.documentElement.classList.toggle("is-previewing", on);
   dirty = true;
 };
-for (const el of [tourLink, ...callouts.map((c) => c.b)]) {
+for (const el of [tourLink, ...spots, ...callouts.map((c) => c.b)]) {
   el.addEventListener("mouseenter", () => preview(true));
   el.addEventListener("mouseleave", () => preview(false));
 }
@@ -3127,6 +3160,69 @@ function scrollSwerve() {
 }
 addEventListener("scroll", scrollSwerve, { passive: true });
 scrollSwerve();
+
+/* ---------- Ghost cursor ---------- */
+// While the overview sits idle, a pretend cursor glides onto a hotspot and presses it, a few times over,
+// visiting a different point each time. It goes for good once the reader reaches for a point or "Why choose us".
+const ghost = document.createElement("div");
+ghost.className = "ghost";
+ghost.setAttribute("aria-hidden", "true");
+ghost.innerHTML = `<i></i><svg viewBox="0 0 24 24"><path d="M5 3v15.2c0 .5.6.75.95.4l3.55-3.45 2.35 5.45c.12.28.44.4.72.28l1.62-.7c.28-.12.4-.44.28-.72L12.1 14.1h4.85c.5 0 .75-.6.4-.95L5.95 2.6C5.6 2.25 5 2.5 5 3z"/></svg><span>${touch.matches ? "Tap" : "Click"} to explore</span>`;
+spotWrap.appendChild(ghost);
+// Milliseconds into each visit: fade in, glide, press, release, fade out, done; then a pause before the next
+const GH = { glide: 400, press: 1700, release: 1830, out: 3500, end: 3900, gap: 6000, visits: 2 };
+let ghostOn = true, ghostT0 = 0, ghostSpot = -1, ghostVisits = 0;
+function stopGhost() {
+  if (!ghostOn) return;
+  ghostOn = false;
+  ghost.remove();
+  spots.forEach((s) => s.classList.remove("is-hinted"));
+}
+for (const el of [tourLink, ...spots]) {
+  el.addEventListener("pointerenter", stopGhost);
+  el.addEventListener("click", stopGhost);
+}
+function ghostFrame(now) {
+  if (!ghostOn) return;
+  requestAnimationFrame(ghostFrame);
+  const hide = () => {
+    ghost.classList.remove("is-on", "is-press", "is-clicked", "is-tip");
+    if (ghostSpot >= 0) spots[ghostSpot].classList.remove("is-hinted");
+  };
+  // Hold off until the model is up and the overview is idle on screen, then start a fresh visit shortly after
+  if (!window.__glReady || !onScreen || current || previewing) {
+    hide();
+    ghostSpot = -1;
+    ghostT0 = now + 2500;
+    return;
+  }
+  const t = now - ghostT0;
+  if (t < 0) return;
+  if (ghostSpot < 0) {
+    const shown = spots.flatMap((s, i) => s.style.opacity === "1" ? [i] : []);
+    if (!shown.length) return;
+    ghostSpot = shown[ghostVisits % shown.length];
+  }
+  if (t > GH.end) {
+    hide();
+    if (++ghostVisits >= GH.visits) return stopGhost();
+    ghostSpot = -1;
+    ghostT0 = now + GH.gap;
+    return;
+  }
+  // Glide in from below right of the point along a gentle arc, tracking it as the camera sways
+  const c = callouts[ghostSpot], far = mobile ? 40 : 72;
+  const x = reduce ? 1 : clamp((t - GH.glide) / (GH.press - GH.glide - 150), 0, 1);
+  const g = 1 - (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const bow = Math.sin(Math.PI * g) * far * 0.18;
+  ghost.style.transform = `translate(${(c.x + far * g + bow * 0.57).toFixed(1)}px, ${(c.y + far * 0.7 * g - bow * 0.82).toFixed(1)}px)`;
+  ghost.classList.toggle("is-on", t < GH.out);
+  ghost.classList.toggle("is-press", t >= GH.press && t < GH.release);
+  ghost.classList.toggle("is-clicked", t >= GH.press && t < GH.out);
+  ghost.classList.toggle("is-tip", t >= GH.press + 120 && t < GH.out);
+  spots[ghostSpot].classList.toggle("is-hinted", t >= GH.press && t < GH.out);
+}
+requestAnimationFrame(ghostFrame);
 
 let pose = null;
 // Moving parts ease toward open only while their step is showing
